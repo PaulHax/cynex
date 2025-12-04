@@ -1,5 +1,6 @@
+import { useState, useCallback, useRef, useEffect } from "react";
 import { DeckGL } from "@deck.gl/react";
-import { OrthographicView } from "@deck.gl/core";
+import { OrthographicView, type PickingInfo } from "@deck.gl/core";
 import { ScatterplotLayer, LineLayer, PolygonLayer } from "@deck.gl/layers";
 import {
   HOSTS,
@@ -20,8 +21,36 @@ import type { AgentAction } from "../trajectory/types";
 type NetworkGraphProps = {
   currentBlueAction?: AgentAction;
   currentRedAction?: AgentAction;
-  width?: number;
-  height?: number;
+};
+
+type NodeData = {
+  id: string;
+  type: string;
+  subnet?: string;
+  position: [number, number];
+  radius: number;
+  color: RGBColor;
+};
+
+const getTooltip = ({ object }: PickingInfo<NodeData>) => {
+  if (!object) return null;
+
+  const lines = [object.id, `Type: ${object.type}`];
+  if (object.subnet) {
+    lines.push(`Subnet: ${object.subnet}`);
+  }
+
+  return {
+    html: lines.map((line) => `<div>${line}</div>`).join(""),
+    style: {
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+      color: "white",
+      padding: "8px 12px",
+      borderRadius: "4px",
+      fontSize: "12px",
+      fontFamily: "monospace",
+    },
+  };
 };
 
 const INITIAL_VIEW_STATE = {
@@ -59,9 +88,30 @@ const createSubnetPolygons = () =>
 export const NetworkGraph = ({
   currentBlueAction,
   currentRedAction,
-  width = 800,
-  height = 400,
 }: NetworkGraphProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+
+  const onViewStateChange = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ({ viewState }: { viewState: any }) => setViewState(viewState),
+    [],
+  );
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const checkReady = () => {
+      if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+        setIsReady(true);
+      }
+    };
+
+    requestAnimationFrame(checkReady);
+  }, []);
+
   const nodePositions = getAllNodePositions();
 
   const hostNodes = HOSTS.map((host) => ({
@@ -134,6 +184,7 @@ export const NetworkGraph = ({
       filled: true,
       radiusUnits: "pixels",
       antialiasing: true,
+      pickable: true,
       updateTriggers: {
         getLineColor: [currentBlueAction?.Host, currentRedAction?.Host],
         getLineWidth: [currentBlueAction?.Host, currentRedAction?.Host],
@@ -142,14 +193,25 @@ export const NetworkGraph = ({
   ];
 
   return (
-    <div style={{ width, height, position: "relative" }}>
-      <DeckGL
-        views={new OrthographicView({ id: "ortho" })}
-        initialViewState={INITIAL_VIEW_STATE}
-        controller={true}
-        layers={layers}
-        style={{ width: "100%", height: "100%" }}
-      />
+    <div
+      ref={containerRef}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+    >
+      {isReady && (
+        <DeckGL
+          views={new OrthographicView({ id: "ortho" })}
+          viewState={viewState}
+          onViewStateChange={onViewStateChange}
+          controller={{
+            scrollZoom: { speed: 0.01, smooth: true },
+            inertia: true,
+          }}
+          layers={layers}
+          getTooltip={getTooltip}
+          width="100%"
+          height="100%"
+        />
+      )}
     </div>
   );
 };

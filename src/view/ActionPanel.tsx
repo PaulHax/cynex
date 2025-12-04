@@ -76,7 +76,7 @@ export const ActionPanel = ({
   redAction,
   score,
 }: ActionPanelProps) => (
-  <div className="bg-slate-800 rounded-lg p-4 w-64">
+  <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4 w-64">
     <div className="text-lg font-bold text-slate-100 pb-2">
       Step {step + 1} / {totalSteps}
     </div>

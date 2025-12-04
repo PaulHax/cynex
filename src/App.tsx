@@ -36,46 +36,49 @@ const App = () => {
 
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="h-full bg-slate-900 flex items-center justify-center">
         <div className="text-slate-400 text-lg">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 p-4">
-      <header className="mb-4">
-        <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-          <h1 className="text-2xl font-bold text-slate-100">Cynex</h1>
-          <TrajectorySelector
-            onTrajectoryLoad={handleTrajectoryLoad}
-            currentName={trajectoryName}
-          />
-        </div>
-        {trajectory && (
-          <p className="text-slate-400 text-sm">
-            {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
-            {trajectory.episode}
-          </p>
-        )}
-      </header>
+    <div className="relative h-full bg-slate-900">
+      {trajectory && (
+        <NetworkGraph
+          currentBlueAction={trajectory.blue_actions[currentStep]}
+          currentRedAction={trajectory.red_actions[currentStep]}
+        />
+      )}
 
-      {!trajectory ? (
-        <div className="flex items-center justify-center h-64">
-          <p className="text-slate-400">Load a trajectory file to get started</p>
-        </div>
-      ) : (
-        <>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <NetworkGraph
-                currentBlueAction={trajectory.blue_actions[currentStep]}
-                currentRedAction={trajectory.red_actions[currentStep]}
-                width={800}
-                height={400}
+      <div className="absolute inset-0 pointer-events-none">
+        <header className="p-4 pointer-events-auto inline-block">
+          <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
+            <div className="flex items-center gap-4 flex-wrap">
+              <h1 className="text-xl font-bold text-slate-100">Cynex</h1>
+              <TrajectorySelector
+                onTrajectoryLoad={handleTrajectoryLoad}
+                currentName={trajectoryName}
               />
             </div>
-            <div>
+            {trajectory && (
+              <p className="text-slate-400 text-sm mt-1">
+                {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
+                {trajectory.episode}
+              </p>
+            )}
+          </div>
+        </header>
+
+        {!trajectory ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4 pointer-events-auto">
+              <p className="text-slate-400">Load a trajectory file to get started</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="absolute top-4 right-4 pointer-events-auto">
               <ActionPanel
                 step={currentStep}
                 totalSteps={trajectory.blue_actions.length}
@@ -84,17 +87,17 @@ const App = () => {
                 score={trajectory.metric_scores[currentStep]}
               />
             </div>
-          </div>
 
-          <div className="mt-4 max-w-3xl">
-            <StepControls
-              currentStep={currentStep}
-              totalSteps={trajectory.blue_actions.length}
-              onStepChange={setCurrentStep}
-            />
-          </div>
-        </>
-      )}
+            <div className="absolute bottom-4 left-4 right-4 max-w-3xl pointer-events-auto">
+              <StepControls
+                currentStep={currentStep}
+                totalSteps={trajectory.blue_actions.length}
+                onStepChange={setCurrentStep}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
