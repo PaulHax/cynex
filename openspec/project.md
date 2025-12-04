@@ -35,13 +35,11 @@
 
 - **State Management**: XState state machines for playback logic (idle → loading → ready/playing/paused)
 - **Component Structure**: Presentational components with hooks for data/logic
-- **File Organization**:
-  - `src/components/` - React components
-  - `src/layers/` - Custom deck.gl layers
-  - `src/machines/` - XState state machines
-  - `src/hooks/` - Custom React hooks
-  - `src/utils/` - Helper functions and constants
-  - `src/types/` - TypeScript interfaces
+- **File Organization** (organized by domain, not programming pattern):
+  - `src/trajectory/` - Trajectory data types, loading, transforms
+  - `src/network/` - Network topology definitions, host positions, colors
+  - `src/playback/` - XState state machine for playback control
+  - `src/view/` - React components, hooks, deck.gl layers (all view-related)
   - `public/data/trajectories/` - JSON trajectory files
 
 ### Testing Strategy
