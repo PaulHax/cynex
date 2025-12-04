@@ -1,0 +1,155 @@
+import { DeckGL } from "@deck.gl/react";
+import { OrthographicView } from "@deck.gl/core";
+import { ScatterplotLayer, LineLayer, PolygonLayer } from "@deck.gl/layers";
+import {
+  HOSTS,
+  INFRASTRUCTURE_NODES,
+  EDGES,
+  SUBNETS,
+  getAllNodePositions,
+} from "../network/topology";
+import {
+  HOST_TYPE_COLORS,
+  AGENT_COLORS,
+  SUBNET_BACKGROUND_COLORS,
+  EDGE_COLORS,
+  type RGBColor,
+} from "../network/colors";
+import type { AgentAction } from "../trajectory/types";
+
+type NetworkGraphProps = {
+  currentBlueAction?: AgentAction;
+  currentRedAction?: AgentAction;
+  width?: number;
+  height?: number;
+};
+
+const INITIAL_VIEW_STATE = {
+  target: [400, 175, 0] as [number, number, number],
+  zoom: 0,
+};
+
+const getNodeRadius = (type: string): number => {
+  switch (type) {
+    case "router":
+      return 12;
+    case "firewall":
+      return 10;
+    case "server":
+      return 16;
+    case "defender":
+      return 16;
+    default:
+      return 14;
+  }
+};
+
+const createSubnetPolygons = () =>
+  SUBNETS.map((subnet) => ({
+    id: subnet.id,
+    polygon: [
+      [subnet.x, 0],
+      [subnet.x + subnet.width, 0],
+      [subnet.x + subnet.width, 350],
+      [subnet.x, 350],
+    ],
+    color: SUBNET_BACKGROUND_COLORS[subnet.id],
+  }));
+
+export const NetworkGraph = ({
+  currentBlueAction,
+  currentRedAction,
+  width = 800,
+  height = 400,
+}: NetworkGraphProps) => {
+  const nodePositions = getAllNodePositions();
+
+  const hostNodes = HOSTS.map((host) => ({
+    ...host,
+    position: [host.x, host.y] as [number, number],
+    radius: getNodeRadius(host.type),
+    color: HOST_TYPE_COLORS[host.type] as RGBColor,
+  }));
+
+  const infraNodes = INFRASTRUCTURE_NODES.map((node) => ({
+    ...node,
+    position: [node.x, node.y] as [number, number],
+    radius: getNodeRadius(node.type),
+    color: HOST_TYPE_COLORS[node.type] as RGBColor,
+  }));
+
+  const allNodes = [...hostNodes, ...infraNodes];
+
+  const edges = EDGES.map((edge) => {
+    const sourcePos = nodePositions.get(edge.source);
+    const targetPos = nodePositions.get(edge.target);
+    return {
+      ...edge,
+      sourcePosition: sourcePos ?? [0, 0],
+      targetPosition: targetPos ?? [0, 0],
+    };
+  });
+
+  const getHighlightColor = (hostId: string): RGBColor | null => {
+    if (currentBlueAction?.Host === hostId) return AGENT_COLORS.blue;
+    if (currentRedAction?.Host === hostId) return AGENT_COLORS.red;
+    return null;
+  };
+
+  const layers = [
+    new PolygonLayer({
+      id: "subnet-backgrounds",
+      data: createSubnetPolygons(),
+      getPolygon: (d) => d.polygon,
+      getFillColor: (d) => d.color,
+      getLineColor: [0, 0, 0, 0],
+      filled: true,
+      stroked: false,
+    }),
+
+    new LineLayer({
+      id: "edges",
+      data: edges,
+      getSourcePosition: (d) => d.sourcePosition,
+      getTargetPosition: (d) => d.targetPosition,
+      getColor: (d) =>
+        d.isFirewall ? EDGE_COLORS.firewall : EDGE_COLORS.normal,
+      getWidth: (d) => (d.isFirewall ? 3 : 2),
+      widthUnits: "pixels",
+    }),
+
+    new ScatterplotLayer({
+      id: "nodes",
+      data: allNodes,
+      getPosition: (d) => d.position,
+      getRadius: (d) => d.radius,
+      getFillColor: (d) => d.color,
+      getLineColor: (d) => {
+        const highlight = getHighlightColor(d.id);
+        return highlight ?? [0, 0, 0, 0];
+      },
+      getLineWidth: (d) => (getHighlightColor(d.id) ? 3 : 0),
+      lineWidthUnits: "pixels",
+      stroked: true,
+      filled: true,
+      radiusUnits: "pixels",
+      antialiasing: true,
+      updateTriggers: {
+        getLineColor: [currentBlueAction?.Host, currentRedAction?.Host],
+        getLineWidth: [currentBlueAction?.Host, currentRedAction?.Host],
+      },
+    }),
+  ];
+
+  return (
+    <div style={{ width, height, position: "relative" }}>
+      <DeckGL
+        views={new OrthographicView({ id: "ortho" })}
+        initialViewState={INITIAL_VIEW_STATE}
+        controller={true}
+        layers={layers}
+        style={{ width: "100%", height: "100%" }}
+      />
+    </div>
+  );
+};
