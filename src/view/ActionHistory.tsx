@@ -8,14 +8,23 @@ type ActionHistoryProps = {
   onStepChange: (step: number) => void;
 };
 
+const StatusIndicator = ({ status }: { status: "TRUE" | "FALSE" }) => (
+  <span className={status === "TRUE" ? "text-green-400" : "text-slate-500"}>
+    {status === "TRUE" ? "✓" : "✗"}
+  </span>
+);
+
 const ActionCell = ({ action }: { action: AgentAction }) => (
-  <div className="flex-1 min-w-0">
-    <div className="text-slate-200 font-medium truncate text-xs">
-      {action.Action}
+  <div className="flex-1 min-w-0 flex items-start gap-1">
+    <StatusIndicator status={action.Status} />
+    <div className="min-w-0">
+      <div className="text-slate-200 font-medium truncate text-xs">
+        {action.Action}
+      </div>
+      {action.Host && action.Host !== action.Action && (
+        <div className="text-slate-300 text-xs truncate">{action.Host}</div>
+      )}
     </div>
-    {action.Host && action.Host !== action.Action && (
-      <div className="text-slate-300 text-xs truncate">{action.Host}</div>
-    )}
   </div>
 );
 

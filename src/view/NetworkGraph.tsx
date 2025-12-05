@@ -33,6 +33,7 @@ type TrailData = {
   color: [number, number, number, number][];
 };
 
+
 type NodeData = {
   id: string;
   type: string;
@@ -224,6 +225,27 @@ export const NetworkGraph = ({
     createTrailPath(previousRedAction?.Host, currentRedAction?.Host, AGENT_COLORS.red, nodePositions, viewState.zoom),
   ].filter((t): t is TrailData => t !== null);
 
+  const worldToScreen = (worldX: number, worldY: number): [number, number] | null => {
+    if (!containerSize) return null;
+    const scale = Math.pow(2, viewState.zoom);
+    const [targetX, targetY] = viewState.target;
+    const screenX = (worldX - targetX) * scale + containerSize.width / 2;
+    const screenY = (worldY - targetY) * scale + containerSize.height / 2;
+    return [screenX, screenY];
+  };
+
+  const getActionLabelPosition = (action: AgentAction | undefined, pixelOffset: number): { x: number; y: number } | null => {
+    if (!action?.Host) return null;
+    const pos = nodePositions.get(action.Host);
+    if (!pos) return null;
+    const screenPos = worldToScreen(pos[0], pos[1]);
+    if (!screenPos) return null;
+    return { x: screenPos[0], y: screenPos[1] + pixelOffset };
+  };
+
+  const bluePos = getActionLabelPosition(currentBlueAction, -40);
+  const redPos = getActionLabelPosition(currentRedAction, 40);
+
   const layers = [
     new PolygonLayer({
       id: "subnet-backgrounds",
@@ -286,6 +308,35 @@ export const NetworkGraph = ({
     }),
   ];
 
+  const ActionLabel = ({ action, position, color }: { action: AgentAction; position: { x: number; y: number }; color: string }) => {
+    const statusIcon = action.Status === "TRUE" ? "✓" : "✗";
+    const statusColor = action.Status === "TRUE" ? "#4ade80" : "#94a3b8";
+    return (
+      <div
+        style={{
+          position: "absolute",
+          left: position.x,
+          top: position.y,
+          transform: "translate(-50%, -50%)",
+          backgroundColor: "rgba(30, 41, 59, 0.95)",
+          border: `1px solid ${color}`,
+          borderRadius: "4px",
+          padding: "4px 8px",
+          fontSize: "12px",
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+        }}
+      >
+        <span style={{ color: statusColor }}>{statusIcon}</span>
+        <span style={{ color: "#e2e8f0" }}>{action.Action}</span>
+      </div>
+    );
+  };
+
   return (
     <div
       ref={containerRef}
@@ -306,6 +357,12 @@ export const NetworkGraph = ({
           height={containerSize.height}
           useDevicePixels={false}
         />
+      )}
+      {currentBlueAction && bluePos && (
+        <ActionLabel action={currentBlueAction} position={bluePos} color="#60a5fa" />
+      )}
+      {currentRedAction && redPos && (
+        <ActionLabel action={currentRedAction} position={redPos} color="#f87171" />
       )}
     </div>
   );
