@@ -2,6 +2,8 @@
 
 A cybersecurity simulation visualizer for analyzing red team vs. blue team scenarios on network topologies.
 
+<img width="1878" height="1178" alt="image" src="https://github.com/user-attachments/assets/a224681c-76fc-425d-ba75-c1e23f99bb39" />
+
 ## Features
 
 - **Network Topology Visualization**: Interactive 2D view of a multi-subnet network (User, Enterprise, and Operational subnets) using deck.gl
