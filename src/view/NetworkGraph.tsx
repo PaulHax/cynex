@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { OrthographicView, type PickingInfo } from "@deck.gl/core";
-import { ScatterplotLayer, LineLayer, PolygonLayer } from "@deck.gl/layers";
+import { ScatterplotLayer, LineLayer, PolygonLayer, PathLayer } from "@deck.gl/layers";
 import {
   HOSTS,
   INFRASTRUCTURE_NODES,
@@ -23,7 +23,14 @@ import type { NodeState } from "../trajectory/nodeState";
 type NetworkGraphProps = {
   currentBlueAction?: AgentAction;
   currentRedAction?: AgentAction;
+  previousBlueAction?: AgentAction;
+  previousRedAction?: AgentAction;
   nodeStates?: Map<string, NodeState>;
+};
+
+type TrailData = {
+  path: [number, number][];
+  color: [number, number, number, number][];
 };
 
 type NodeData = {
@@ -88,13 +95,61 @@ const createSubnetPolygons = () =>
     color: SUBNET_BACKGROUND_COLORS[subnet.id],
   }));
 
+const createTrailPath = (
+  fromHost: string | undefined,
+  toHost: string | undefined,
+  agentColor: RGBColor,
+  nodePositions: Map<string, [number, number]>,
+  zoom: number
+): TrailData | null => {
+  if (!fromHost || !toHost || fromHost === toHost) return null;
+
+  const fromPos = nodePositions.get(fromHost);
+  const toPos = nodePositions.get(toHost);
+  if (!fromPos || !toPos) return null;
+
+  const dx = toPos[0] - fromPos[0];
+  const dy = toPos[1] - fromPos[1];
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const ux = dx / len;
+  const uy = dy / len;
+
+  const pixelGap = 20;
+  const scale = Math.pow(2, zoom);
+  const worldGap = pixelGap / scale;
+
+  const edgeStart: [number, number] = [fromPos[0] + ux * worldGap, fromPos[1] + uy * worldGap];
+  const edgeEnd: [number, number] = [toPos[0] - ux * worldGap, toPos[1] - uy * worldGap];
+
+  const segments = 10;
+  const path: [number, number][] = [];
+  const colors: [number, number, number, number][] = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    path.push([
+      edgeStart[0] + (edgeEnd[0] - edgeStart[0]) * t,
+      edgeStart[1] + (edgeEnd[1] - edgeStart[1]) * t,
+    ]);
+    const alpha = Math.round(20 + 160 * t);
+    colors.push([agentColor[0], agentColor[1], agentColor[2], alpha]);
+  }
+
+  return { path, color: colors };
+};
+
 export const NetworkGraph = ({
   currentBlueAction,
   currentRedAction,
+  previousBlueAction,
+  previousRedAction,
   nodeStates,
 }: NetworkGraphProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [containerSize, setContainerSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
 
   const onViewStateChange = useCallback(
@@ -109,9 +164,9 @@ export const NetworkGraph = ({
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
-      if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-        setIsReady(true);
-        observer.disconnect();
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) {
+        setContainerSize({ width, height });
       }
     });
 
@@ -155,11 +210,19 @@ export const NetworkGraph = ({
 
   const getNodeFillColor = (node: NodeData): RGBColor => {
     const state = nodeStates?.get(node.id);
-    if (state === "compromised") {
-      return NODE_STATE_COLORS.detected;
+    if (state === "root_access") {
+      return NODE_STATE_COLORS.root_access;
+    }
+    if (state === "user_access") {
+      return NODE_STATE_COLORS.user_access;
     }
     return node.color;
   };
+
+  const trails: TrailData[] = [
+    createTrailPath(previousBlueAction?.Host, currentBlueAction?.Host, AGENT_COLORS.blue, nodePositions, viewState.zoom),
+    createTrailPath(previousRedAction?.Host, currentRedAction?.Host, AGENT_COLORS.red, nodePositions, viewState.zoom),
+  ].filter((t): t is TrailData => t !== null);
 
   const layers = [
     new PolygonLayer({
@@ -193,7 +256,7 @@ export const NetworkGraph = ({
         const highlight = getHighlightColor(d.id);
         return highlight ?? [0, 0, 0, 0];
       },
-      getLineWidth: (d) => (getHighlightColor(d.id) ? 3 : 0),
+      getLineWidth: (d) => (getHighlightColor(d.id) ? 8 : 0),
       lineWidthUnits: "pixels",
       stroked: true,
       filled: true,
@@ -206,6 +269,21 @@ export const NetworkGraph = ({
         getLineWidth: [currentBlueAction?.Host, currentRedAction?.Host],
       },
     }),
+
+    new PathLayer<TrailData>({
+      id: "agent-trails",
+      data: trails,
+      getPath: (d) => d.path,
+      getColor: (d) => d.color,
+      getWidth: 3,
+      widthUnits: "pixels",
+      capRounded: true,
+      jointRounded: true,
+      updateTriggers: {
+        getPath: [previousBlueAction?.Host, currentBlueAction?.Host, previousRedAction?.Host, currentRedAction?.Host, viewState.zoom],
+        getColor: [previousBlueAction?.Host, currentBlueAction?.Host, previousRedAction?.Host, currentRedAction?.Host],
+      },
+    }),
   ];
 
   return (
@@ -213,7 +291,7 @@ export const NetworkGraph = ({
       ref={containerRef}
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
     >
-      {isReady && (
+      {containerSize && (
         <DeckGL
           views={new OrthographicView({ id: "ortho" })}
           viewState={viewState}
@@ -224,8 +302,9 @@ export const NetworkGraph = ({
           }}
           layers={layers}
           getTooltip={getTooltip}
-          width="100%"
-          height="100%"
+          width={containerSize.width}
+          height={containerSize.height}
+          useDevicePixels={false}
         />
       )}
     </div>

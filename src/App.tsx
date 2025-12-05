@@ -58,11 +58,13 @@ const App = () => {
         <NetworkGraph
           currentBlueAction={trajectory.blue_actions[currentStep]}
           currentRedAction={trajectory.red_actions[currentStep]}
+          previousBlueAction={currentStep > 0 ? trajectory.blue_actions[currentStep - 1] : undefined}
+          previousRedAction={currentStep > 0 ? trajectory.red_actions[currentStep - 1] : undefined}
           nodeStates={nodeStates}
         />
       )}
 
-      <div className="absolute left-0 top-0 bottom-0 w-96 flex flex-col p-4 gap-4 pointer-events-none">
+      <div className="absolute left-0 top-0 bottom-0 w-[420px] flex flex-col p-4 gap-4 pointer-events-none">
         <header className="flex-shrink-0 pointer-events-auto">
           <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
             <div className="flex items-center gap-4 flex-wrap">
