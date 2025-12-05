@@ -1,18 +1,22 @@
-import { useState, useEffect, useCallback, useRef, type DragEvent, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { loadTrajectoryManifest, loadTrajectory, parseTrajectoryFile } from "../trajectory/loader";
 import type { TrajectoryFile } from "../trajectory/types";
 
 type TrajectorySelectorProps = {
   onTrajectoryLoad: (trajectory: TrajectoryFile, name: string) => void;
   currentName: string | null;
+  loading?: boolean;
+  error?: string | null;
 };
 
-export const TrajectorySelector = ({ onTrajectoryLoad, currentName }: TrajectorySelectorProps) => {
+export const TrajectorySelector = ({ onTrajectoryLoad, currentName, loading: externalLoading, error: externalError }: TrajectorySelectorProps) => {
   const [availableFiles, setAvailableFiles] = useState<string[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isLoading = loading || externalLoading;
+  const displayError = error || externalError;
 
   useEffect(() => {
     loadTrajectoryManifest().then(m => setAvailableFiles(m.files));
@@ -35,11 +39,6 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName }: Trajectory
   const handleFileInput = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    await loadFromFile(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const loadFromFile = async (file: File) => {
     setLoading(true);
     setError(null);
     try {
@@ -50,41 +49,21 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName }: Trajectory
     } finally {
       setLoading(false);
     }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
-  const handleDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(async (e: DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file?.name.endsWith(".json")) {
-      await loadFromFile(file);
-    } else {
-      setError("Please drop a JSON file");
-    }
-  }, []);
 
   const hasAvailableFiles = availableFiles.length > 0;
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex items-center gap-2">
       {hasAvailableFiles && (
         <select
-          className="bg-slate-800 text-slate-200 px-3 py-1.5 rounded border border-slate-600 text-sm"
+          className="bg-slate-700 text-slate-200 px-2 py-1 rounded border border-slate-600 text-sm"
           value={currentName && availableFiles.includes(currentName) ? currentName : ""}
           onChange={e => handleSelect(e.target.value)}
-          disabled={loading}
+          disabled={isLoading}
         >
-          <option value="">Select trajectory...</option>
+          <option value="">Select...</option>
           {availableFiles.map(f => (
             <option key={f} value={f}>{f.replace(".json", "")}</option>
           ))}
@@ -93,10 +72,10 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName }: Trajectory
 
       <button
         onClick={() => fileInputRef.current?.click()}
-        disabled={loading}
-        className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded text-sm disabled:opacity-50"
+        disabled={isLoading}
+        className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded text-sm disabled:opacity-50"
       >
-        Load File...
+        Load File
       </button>
       <input
         ref={fileInputRef}
@@ -106,21 +85,10 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName }: Trajectory
         className="hidden"
       />
 
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`px-3 py-1.5 rounded border-2 border-dashed text-sm transition-colors ${
-          isDragging
-            ? "border-blue-400 bg-blue-400/10 text-blue-300"
-            : "border-slate-600 text-slate-400"
-        }`}
-      >
-        {isDragging ? "Drop here" : "or drag JSON"}
-      </div>
+      <span className="text-slate-500 text-xs">or drag 'n drop</span>
 
-      {loading && <span className="text-slate-400 text-sm">Loading...</span>}
-      {error && <span className="text-red-400 text-sm">{error}</span>}
+      {isLoading && <span className="text-slate-400 text-sm">Loading...</span>}
+      {displayError && <span className="text-red-400 text-sm">{displayError}</span>}
     </div>
   );
 };

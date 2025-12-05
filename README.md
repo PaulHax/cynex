@@ -1,73 +1,69 @@
-# React + TypeScript + Vite
+# Cynex
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A cybersecurity simulation visualizer for analyzing red team vs. blue team scenarios on network topologies.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Network Topology Visualization**: Interactive 2D view of a multi-subnet network (User, Enterprise, and Operational subnets) using deck.gl
+- **Attack/Defense Playback**: Step through simulated attack and defense trajectories chronologically
+- **Node State Tracking**: Color-coded host states showing clean, compromised (user/root access), and restored nodes
+- **Action History**: View red team attacks (ExploitRemoteService, PrivilegeEscalate, Impact) and blue team defenses (Restore)
+- **Security Metrics Dashboard**: Track CIA (Confidentiality, Integrity, Availability) and Resilience scores
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Loading Trajectory Files
+
+Trajectory JSON files can be loaded two ways:
+
+### Via Manifest (Pre-configured)
+
+Place trajectory files in `public/data/trajectories/` and create a `manifest.json`:
+
+```json
+{
+  "files": [
+    "/data/trajectories/scenario1.json",
+    "/data/trajectories/scenario2.json"
+  ]
+}
 ```
+
+### Via File Upload
+
+Use the file picker in the UI to load a trajectory JSON directly from your filesystem.
+
+### Trajectory File Format
+
+```json
+{
+  "blue_agent_name": "BlueAgent",
+  "red_agent_name": "RedAgent",
+  "episode": 1,
+  "experiment_time": "2024-01-01T00:00:00",
+  "network_topology": { ... },
+  "blue_actions": [{ "Action": "Restore", "Status": "TRUE", "Host": "server1" }],
+  "red_actions": [{ "Action": "ExploitRemoteService", "Status": "TRUE", "Host": "workstation1" }],
+  "metric_scores": [{ "C": 1.0, "I": 1.0, "A": 1.0, "Resilience": 0.95 }]
+}
+```
+
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite
+- deck.gl
+- Tailwind CSS

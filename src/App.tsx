@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, type DragEvent } from "react";
 import { NetworkGraph } from "./view/NetworkGraph";
 import { ActionPanel } from "./view/ActionPanel";
 import { StepControls } from "./view/StepControls";
 import { TrajectorySelector } from "./view/TrajectorySelector";
-import { loadTrajectoryManifest, loadTrajectory } from "./trajectory/loader";
+import { loadTrajectoryManifest, loadTrajectory, parseTrajectoryFile } from "./trajectory/loader";
 import { computeNodeStates } from "./trajectory/nodeState";
 import type { TrajectoryFile } from "./trajectory/types";
 
@@ -12,6 +12,9 @@ const App = () => {
   const [trajectoryName, setTrajectoryName] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
+  const [dropLoading, setDropLoading] = useState(false);
 
   useEffect(() => {
     loadTrajectoryManifest().then(async (manifest) => {
@@ -33,7 +36,40 @@ const App = () => {
     setTrajectory(data);
     setTrajectoryName(name);
     setCurrentStep(0);
+    setDropError(null);
   }, []);
+
+  const handleDragOver = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (!file?.name.endsWith(".json")) {
+      setDropError("Please drop a JSON file");
+      return;
+    }
+    setDropLoading(true);
+    setDropError(null);
+    try {
+      const data = await parseTrajectoryFile(file);
+      handleTrajectoryLoad(data, file.name);
+    } catch (err) {
+      setDropError(err instanceof Error ? err.message : "Invalid trajectory file");
+    } finally {
+      setDropLoading(false);
+    }
+  }, [handleTrajectoryLoad]);
 
   const nodeStates = useMemo(() => {
     if (!trajectory) return undefined;
@@ -53,7 +89,20 @@ const App = () => {
   }
 
   return (
-    <div className="relative h-full bg-slate-900">
+    <div
+      className="relative h-full bg-slate-900"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+          <div className="border-4 border-dashed border-blue-400 rounded-2xl p-12 text-blue-300 text-2xl">
+            Drop trajectory JSON here
+          </div>
+        </div>
+      )}
+
       {trajectory && (
         <NetworkGraph
           currentBlueAction={trajectory.blue_actions[currentStep]}
@@ -67,11 +116,12 @@ const App = () => {
       <div className="absolute left-0 top-0 bottom-0 w-[420px] flex flex-col p-4 gap-4 pointer-events-none">
         <header className="flex-shrink-0 pointer-events-auto">
           <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
-            <div className="flex items-center gap-4 flex-wrap">
-              <h1 className="text-xl font-bold text-slate-100">Cynex</h1>
+            <div className="flex items-center gap-3">
               <TrajectorySelector
                 onTrajectoryLoad={handleTrajectoryLoad}
                 currentName={trajectoryName}
+                loading={dropLoading}
+                error={dropError}
               />
             </div>
             {trajectory && (
