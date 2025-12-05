@@ -1,0 +1,2831 @@
+{
+    "blue_agent_name": "PPO agent",
+    "red_agent_name": "RedMeanderAgent_Resilience",
+    "episode": 1,
+    "experiment_time": "2025-11-12_16-55-36",
+    "network_topology": {
+        "Defender": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.217.109",
+                    "Subnet": {
+                        "network_address": "10.0.217.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 0,
+                    "Timeout": 0,
+                    "PID": 612,
+                    "Type": "VELOCIRAPTOR_SERVER",
+                    "Agent": "Blue"
+                },
+                {
+                    "Username": "ubuntu",
+                    "ID": 9,
+                    "Timeout": 0,
+                    "PID": 5547,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 612,
+                    "Username": "ubuntu"
+                },
+                {
+                    "PID": 5547,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Defender",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "Enterprise0": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.217.98",
+                    "Subnet": {
+                        "network_address": "10.0.217.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 6,
+                    "Timeout": 0,
+                    "PID": 2612,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 2612,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Enterprise0",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "Enterprise1": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.217.106",
+                    "Subnet": {
+                        "network_address": "10.0.217.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "SYSTEM",
+                    "ID": 7,
+                    "Timeout": 0,
+                    "PID": 601,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 601,
+                    "Username": "SYSTEM"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "Administrator",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent"
+                },
+                {
+                    "Username": "vagrant",
+                    "Password": "vagrant",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "SYSTEM"
+                }
+            ],
+            "System info": {
+                "Hostname": "Enterprise1",
+                "OSType": "WINDOWS",
+                "OSDistribution": "WINDOWS_SVR_2008",
+                "OSVersion": "W6_1_7601",
+                "Architecture": "x64"
+            }
+        },
+        "Enterprise2": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.217.99",
+                    "Subnet": {
+                        "network_address": "10.0.217.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "SYSTEM",
+                    "ID": 8,
+                    "Timeout": 0,
+                    "PID": 15079,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 15079,
+                    "Username": "SYSTEM"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "Administrator",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent"
+                },
+                {
+                    "Username": "vagrant",
+                    "Password": "vagrant",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "SYSTEM"
+                }
+            ],
+            "System info": {
+                "Hostname": "Enterprise2",
+                "OSType": "WINDOWS",
+                "OSDistribution": "WINDOWS_SVR_2008",
+                "OSVersion": "W6_1_7601",
+                "Architecture": "x64"
+            }
+        },
+        "Op_Host0": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.94.100",
+                    "Subnet": {
+                        "network_address": "10.0.94.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 13,
+                    "Timeout": 0,
+                    "PID": 13725,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 13725,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Op_Host0",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "Op_Host1": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.94.97",
+                    "Subnet": {
+                        "network_address": "10.0.94.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 14,
+                    "Timeout": 0,
+                    "PID": 29031,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 29031,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Op_Host1",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "Op_Host2": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.94.102",
+                    "Subnet": {
+                        "network_address": "10.0.94.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 15,
+                    "Timeout": 0,
+                    "PID": 18924,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 18924,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Op_Host2",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "Auth": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.94.108",
+                    "Subnet": {
+                        "network_address": "10.0.94.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 10,
+                    "Timeout": 0,
+                    "PID": 11358,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 11358,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Auth",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "Database": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.94.101",
+                    "Subnet": {
+                        "network_address": "10.0.94.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 11,
+                    "Timeout": 0,
+                    "PID": 2300,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 2300,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Database",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "Front": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.94.104",
+                    "Subnet": {
+                        "network_address": "10.0.94.96",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 12,
+                    "Timeout": 0,
+                    "PID": 13123,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 13123,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "Front",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "User0": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.101.22",
+                    "Subnet": {
+                        "network_address": "10.0.101.16",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 1,
+                    "Timeout": 0,
+                    "PID": 914,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 914,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "Administrator",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent"
+                },
+                {
+                    "Username": "vagrant",
+                    "Password": "vagrant",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "SYSTEM"
+                }
+            ],
+            "System info": {
+                "Hostname": "User0",
+                "OSType": "WINDOWS",
+                "OSDistribution": "WINDOWS_SVR_2008",
+                "OSVersion": "W6_1_7601",
+                "Architecture": "x64"
+            }
+        },
+        "User1": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.101.26",
+                    "Subnet": {
+                        "network_address": "10.0.101.16",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 2,
+                    "Timeout": 0,
+                    "PID": 32030,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 32030,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "Administrator",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent"
+                },
+                {
+                    "Username": "vagrant",
+                    "Password": "vagrant",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "SYSTEM"
+                }
+            ],
+            "System info": {
+                "Hostname": "User1",
+                "OSType": "WINDOWS",
+                "OSDistribution": "WINDOWS_SVR_2008",
+                "OSVersion": "W6_1_7601",
+                "Architecture": "x64"
+            }
+        },
+        "User2": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.101.28",
+                    "Subnet": {
+                        "network_address": "10.0.101.16",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 3,
+                    "Timeout": 0,
+                    "PID": 2114,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 2114,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "Administrator",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent"
+                },
+                {
+                    "Username": "vagrant",
+                    "Password": "vagrant",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "SYSTEM"
+                }
+            ],
+            "System info": {
+                "Hostname": "User2",
+                "OSType": "WINDOWS",
+                "OSDistribution": "WINDOWS_SVR_2008",
+                "OSVersion": "W6_1_7601",
+                "Architecture": "x64"
+            }
+        },
+        "User3": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.101.30",
+                    "Subnet": {
+                        "network_address": "10.0.101.16",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 4,
+                    "Timeout": 0,
+                    "PID": 10773,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 10773,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "User3",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        },
+        "User4": {
+            "Interface": [
+                {
+                    "Interface Name": "lo",
+                    "IP Address": "127.0.0.1",
+                    "Subnet": {
+                        "network_address": "127.0.0.0",
+                        "netmask": "255.0.0.0",
+                        "_prefixlen": 8
+                    }
+                },
+                {
+                    "Interface Name": "eth0",
+                    "IP Address": "10.0.101.20",
+                    "Subnet": {
+                        "network_address": "10.0.101.16",
+                        "netmask": "255.255.255.240",
+                        "_prefixlen": 28
+                    }
+                }
+            ],
+            "Sessions": [
+                {
+                    "Username": "ubuntu",
+                    "ID": 5,
+                    "Timeout": 0,
+                    "PID": 16601,
+                    "Type": "VELOCIRAPTOR_CLIENT",
+                    "Agent": "Blue"
+                }
+            ],
+            "Processes": [
+                {
+                    "PID": 16601,
+                    "Username": "ubuntu"
+                }
+            ],
+            "User Info": [
+                {
+                    "Username": "root",
+                    "Groups": [
+                        {
+                            "GID": 0
+                        }
+                    ]
+                },
+                {
+                    "Username": "www-data",
+                    "Groups": [
+                        {
+                            "GID": 33
+                        }
+                    ]
+                },
+                {
+                    "Username": "pi",
+                    "Password": "raspberry",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                },
+                {
+                    "Username": "ubuntu",
+                    "Groups": [
+                        {
+                            "GID": 1000
+                        }
+                    ]
+                },
+                {
+                    "Username": "GreenAgent",
+                    "Groups": [
+                        {
+                            "GID": 1001
+                        }
+                    ]
+                }
+            ],
+            "System info": {
+                "Hostname": "User4",
+                "OSType": "LINUX",
+                "OSDistribution": "UBUNTU",
+                "OSVersion": "U18_04_3",
+                "Architecture": "x64"
+            }
+        }
+    },
+    "blue_actions": [
+        {
+            "Action": "DecoyTomcat",
+            "Status": "TRUE",
+            "Host": "Database"
+        },
+        {
+            "Action": "DecoyHarakaSMPT",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "DecoyApache",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "DecoyTomcat",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "DecoyTomcat",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "DecoyHarakaSMPT",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Database"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Database"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Enterprise0"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Database"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Defender"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Database"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Auth"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "Database"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "Restore",
+            "Status": "TRUE",
+            "Host": "User1"
+        }
+    ],
+    "red_actions": [
+        {
+            "Action": "DiscoverRemoteSystems",
+            "Status": "TRUE",
+            "Host": "DiscoverRemoteSystems"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "User0"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "User4"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "User4"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "User3"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "User3"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "User0"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "User1"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "User2"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "User2"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "Enterprise0"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "Enterprise0"
+        },
+        {
+            "Action": "DiscoverRemoteSystems",
+            "Status": "TRUE",
+            "Host": "DiscoverRemoteSystems"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "Enterprise2"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "Enterprise2"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "DiscoverNetworkServices",
+            "Status": "TRUE",
+            "Host": "DiscoverNetworkServices"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "Enterprise1"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "Enterprise1"
+        },
+        {
+            "Action": "ExploitRemoteService",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "PrivilegeEscalate",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        },
+        {
+            "Action": "Impact",
+            "Status": "TRUE",
+            "Host": "Front"
+        }
+    ],
+    "metric_scores": [
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 0,
+            "A": 0,
+            "Resilience": 0.0
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        },
+        {
+            "C": 0,
+            "I": 10.0,
+            "A": 10.0,
+            "Resilience": 0.4
+        }
+    ]
+}

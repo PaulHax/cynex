@@ -26,5 +26,5 @@ dist-ssr
 # Playwright
 .playwright/
 
-# User trajectory files (except manifest which is generated)
-public/data/trajectories/*.json
+# Generated trajectory manifest
+public/data/trajectories/manifest.json
