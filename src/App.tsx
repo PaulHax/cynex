@@ -91,11 +91,12 @@ const App = () => {
           <>
             <div className="absolute top-4 right-4 pointer-events-auto">
               <ActionPanel
-                step={currentStep}
+                currentStep={currentStep}
                 totalSteps={trajectory.blue_actions.length}
-                blueAction={trajectory.blue_actions[currentStep]}
-                redAction={trajectory.red_actions[currentStep]}
+                blueActions={trajectory.blue_actions}
+                redActions={trajectory.red_actions}
                 score={trajectory.metric_scores[currentStep]}
+                onStepChange={setCurrentStep}
               />
             </div>
 
