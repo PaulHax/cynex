@@ -1,13 +1,9 @@
 import type { AgentAction } from "./types";
 
-export type NodeState = "clean" | "compromised";
+export type NodeState = "clean" | "user_access" | "root_access";
 
-const COMPROMISE_ACTIONS = new Set([
-  "ExploitRemoteService",
-  "PrivilegeEscalate",
-  "Impact",
-]);
-
+const USER_ACCESS_ACTIONS = new Set(["ExploitRemoteService"]);
+const ROOT_ACCESS_ACTIONS = new Set(["PrivilegeEscalate", "Impact"]);
 const RESTORE_ACTIONS = new Set(["Restore"]);
 
 export const computeNodeStates = (
@@ -21,12 +17,12 @@ export const computeNodeStates = (
     const redAction = redActions[step];
     const blueAction = blueActions[step];
 
-    if (
-      redAction?.Status === "TRUE" &&
-      COMPROMISE_ACTIONS.has(redAction.Action) &&
-      redAction.Host !== redAction.Action
-    ) {
-      states.set(redAction.Host, "compromised");
+    if (redAction?.Status === "TRUE" && redAction.Host !== redAction.Action) {
+      if (USER_ACCESS_ACTIONS.has(redAction.Action)) {
+        states.set(redAction.Host, "user_access");
+      } else if (ROOT_ACCESS_ACTIONS.has(redAction.Action)) {
+        states.set(redAction.Host, "root_access");
+      }
     }
 
     if (

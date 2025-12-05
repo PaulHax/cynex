@@ -10,7 +10,8 @@ export const AGENT_COLORS = {
 
 export const NODE_STATE_COLORS = {
   clean: [107, 114, 128] as RGBColor,
-  compromised: [220, 38, 38] as RGBColor,
+  user_access: [251, 191, 36] as RGBColor, // Amber - initial compromise
+  root_access: [219, 88, 140] as RGBColor, // Magenta/pink - escalated/root access
   detected: [245, 158, 11] as RGBColor,
   restored: [16, 185, 129] as RGBColor,
 } as const;
