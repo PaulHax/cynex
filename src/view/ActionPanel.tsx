@@ -19,7 +19,7 @@ export const ActionPanel = ({
   score,
   onStepChange,
 }: ActionPanelProps) => (
-  <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4 w-96 flex flex-col max-h-[calc(100vh-8rem)]">
+  <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4 w-full h-full flex flex-col">
     <div className="text-lg font-bold text-slate-100 pb-3 text-center">
       Step {currentStep + 1} / {totalSteps}
     </div>

@@ -71,7 +71,16 @@ The system SHALL encode host type and state through node appearance.
 
 ### Requirement: Action Panel
 
-The system SHALL display the current step's actions in a side panel with a reorganized layout showing metrics, current step, and action history.
+The system SHALL display the current step's actions in a side panel positioned on the left side of the screen within a flex container, showing metrics, current step, and action history.
+
+#### Scenario: Left sidebar layout
+
+- **WHEN** viewing the application with a loaded trajectory
+- **THEN** a left sidebar contains the trajectory selector, action panel, and playback controls
+- **AND** the trajectory selector is at the top with fixed height
+- **AND** the action panel fills the available space between selector and controls
+- **AND** the playback controls are at the bottom with fixed height
+- **AND** the layout is reactive (no hardcoded pixel offsets)
 
 #### Scenario: Panel layout order
 

@@ -107,13 +107,16 @@ export const NetworkGraph = ({
     const container = containerRef.current;
     if (!container) return;
 
-    const checkReady = () => {
-      if (container.offsetWidth > 0 && container.offsetHeight > 0) {
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
         setIsReady(true);
+        observer.disconnect();
       }
-    };
+    });
 
-    requestAnimationFrame(checkReady);
+    observer.observe(container);
+    return () => observer.disconnect();
   }, []);
 
   const nodePositions = getAllNodePositions();
