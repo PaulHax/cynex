@@ -14,13 +14,16 @@ import {
   AGENT_COLORS,
   SUBNET_BACKGROUND_COLORS,
   EDGE_COLORS,
+  NODE_STATE_COLORS,
   type RGBColor,
 } from "../network/colors";
 import type { AgentAction } from "../trajectory/types";
+import type { NodeState } from "../trajectory/nodeState";
 
 type NetworkGraphProps = {
   currentBlueAction?: AgentAction;
   currentRedAction?: AgentAction;
+  nodeStates?: Map<string, NodeState>;
 };
 
 type NodeData = {
@@ -88,6 +91,7 @@ const createSubnetPolygons = () =>
 export const NetworkGraph = ({
   currentBlueAction,
   currentRedAction,
+  nodeStates,
 }: NetworkGraphProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
@@ -146,6 +150,14 @@ export const NetworkGraph = ({
     return null;
   };
 
+  const getNodeFillColor = (node: NodeData): RGBColor => {
+    const state = nodeStates?.get(node.id);
+    if (state === "compromised") {
+      return NODE_STATE_COLORS.detected;
+    }
+    return node.color;
+  };
+
   const layers = [
     new PolygonLayer({
       id: "subnet-backgrounds",
@@ -173,7 +185,7 @@ export const NetworkGraph = ({
       data: allNodes,
       getPosition: (d) => d.position,
       getRadius: (d) => d.radius,
-      getFillColor: (d) => d.color,
+      getFillColor: getNodeFillColor,
       getLineColor: (d) => {
         const highlight = getHighlightColor(d.id);
         return highlight ?? [0, 0, 0, 0];
@@ -186,6 +198,7 @@ export const NetworkGraph = ({
       antialiasing: true,
       pickable: true,
       updateTriggers: {
+        getFillColor: [nodeStates],
         getLineColor: [currentBlueAction?.Host, currentRedAction?.Host],
         getLineWidth: [currentBlueAction?.Host, currentRedAction?.Host],
       },

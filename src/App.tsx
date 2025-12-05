@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { NetworkGraph } from "./view/NetworkGraph";
 import { ActionPanel } from "./view/ActionPanel";
 import { StepControls } from "./view/StepControls";
 import { TrajectorySelector } from "./view/TrajectorySelector";
 import { loadTrajectoryManifest, loadTrajectory } from "./trajectory/loader";
+import { computeNodeStates } from "./trajectory/nodeState";
 import type { TrajectoryFile } from "./trajectory/types";
 
 const App = () => {
@@ -34,6 +35,15 @@ const App = () => {
     setCurrentStep(0);
   }, []);
 
+  const nodeStates = useMemo(() => {
+    if (!trajectory) return undefined;
+    return computeNodeStates(
+      trajectory.blue_actions,
+      trajectory.red_actions,
+      currentStep
+    );
+  }, [trajectory, currentStep]);
+
   if (initialLoading) {
     return (
       <div className="h-full bg-slate-900 flex items-center justify-center">
@@ -48,6 +58,7 @@ const App = () => {
         <NetworkGraph
           currentBlueAction={trajectory.blue_actions[currentStep]}
           currentRedAction={trajectory.red_actions[currentStep]}
+          nodeStates={nodeStates}
         />
       )}
 
