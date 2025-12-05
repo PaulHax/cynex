@@ -71,7 +71,15 @@ The system SHALL encode host type and state through node appearance.
 
 ### Requirement: Action Panel
 
-The system SHALL display the current step's actions in a side panel positioned on the left side of the screen within a flex container, showing metrics, current step, and action history.
+The system SHALL display the current step's actions in a side panel positioned on the left side of the screen within a flex container, showing metrics, current step, and action history. The sidebar SHALL be collapsible.
+
+#### Scenario: Side-by-side layout
+
+- **WHEN** viewing the application with a loaded trajectory
+- **THEN** the sidebar and network graph are displayed side-by-side using flexbox
+- **AND** the sidebar takes a fixed width when expanded
+- **AND** the network graph fills the remaining horizontal space
+- **AND** both sidebar and graph fill the full viewport height
 
 #### Scenario: Left sidebar layout
 
@@ -81,6 +89,20 @@ The system SHALL display the current step's actions in a side panel positioned o
 - **AND** the action panel fills the available space between selector and controls
 - **AND** the playback controls are at the bottom with fixed height
 - **AND** the layout is reactive (no hardcoded pixel offsets)
+
+#### Scenario: Collapse sidebar
+
+- **WHEN** the user clicks the collapse toggle button
+- **AND** the sidebar is currently expanded
+- **THEN** the sidebar collapses to show only the toggle button
+- **AND** the network graph expands to fill the freed space
+
+#### Scenario: Expand sidebar
+
+- **WHEN** the user clicks the expand toggle button
+- **AND** the sidebar is currently collapsed
+- **THEN** the sidebar expands to show full content
+- **AND** the network graph shrinks to accommodate the sidebar
 
 #### Scenario: Panel layout order
 

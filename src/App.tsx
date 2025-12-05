@@ -15,6 +15,7 @@ const App = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
   const [dropLoading, setDropLoading] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     loadTrajectoryManifest().then(async (manifest) => {
@@ -90,7 +91,7 @@ const App = () => {
 
   return (
     <div
-      className="relative h-full bg-slate-900"
+      className="h-full bg-slate-900 flex"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -103,63 +104,84 @@ const App = () => {
         </div>
       )}
 
-      {trajectory && (
-        <NetworkGraph
-          currentBlueAction={trajectory.blue_actions[currentStep]}
-          currentRedAction={trajectory.red_actions[currentStep]}
-          previousBlueAction={currentStep > 0 ? trajectory.blue_actions[currentStep - 1] : undefined}
-          previousRedAction={currentStep > 0 ? trajectory.red_actions[currentStep - 1] : undefined}
-          nodeStates={nodeStates}
-        />
-      )}
+      <div className={`relative flex-shrink-0 flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? 'w-0 p-0' : 'w-[420px]'}`}>
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="absolute top-4 -right-4 z-10 bg-slate-800 hover:bg-slate-700 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-colors shadow-lg"
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <svg
+            className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
 
-      <div className="absolute left-0 top-0 bottom-0 w-[420px] flex flex-col p-4 gap-4 pointer-events-none">
-        <header className="flex-shrink-0 pointer-events-auto">
-          <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
-            <div className="flex items-center gap-3">
-              <TrajectorySelector
-                onTrajectoryLoad={handleTrajectoryLoad}
-                currentName={trajectoryName}
-                loading={dropLoading}
-                error={dropError}
-              />
-            </div>
-            {trajectory && (
-              <p className="text-slate-400 text-sm mt-1">
-                {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
-                {trajectory.episode}
-              </p>
-            )}
-          </div>
-        </header>
-
-        {!trajectory ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4 pointer-events-auto">
-              <p className="text-slate-400">Load a trajectory file to get started</p>
-            </div>
-          </div>
-        ) : (
+        {!sidebarCollapsed && (
           <>
-            <div className="flex-1 min-h-0 pointer-events-auto">
-              <ActionPanel
-                currentStep={currentStep}
-                totalSteps={trajectory.blue_actions.length}
-                blueActions={trajectory.blue_actions}
-                redActions={trajectory.red_actions}
-                score={trajectory.metric_scores[currentStep]}
-                onStepChange={setCurrentStep}
-              />
-            </div>
+            <header className="flex-shrink-0">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                  <TrajectorySelector
+                    onTrajectoryLoad={handleTrajectoryLoad}
+                    currentName={trajectoryName}
+                    loading={dropLoading}
+                    error={dropError}
+                  />
+                </div>
+                {trajectory && (
+                  <p className="text-slate-400 text-sm mt-1">
+                    {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
+                    {trajectory.episode}
+                  </p>
+                )}
+              </div>
+            </header>
 
-            <div className="flex-shrink-0 pointer-events-auto">
-              <StepControls
-                currentStep={currentStep}
-                totalSteps={trajectory.blue_actions.length}
-                onStepChange={setCurrentStep}
-              />
-            </div>
+            {!trajectory ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
+                  <p className="text-slate-400">Load a trajectory file to get started</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex-1 min-h-0">
+                  <ActionPanel
+                    currentStep={currentStep}
+                    totalSteps={trajectory.blue_actions.length}
+                    blueActions={trajectory.blue_actions}
+                    redActions={trajectory.red_actions}
+                    score={trajectory.metric_scores[currentStep]}
+                    onStepChange={setCurrentStep}
+                  />
+                </div>
+
+                <div className="flex-shrink-0">
+                  <StepControls
+                    currentStep={currentStep}
+                    totalSteps={trajectory.blue_actions.length}
+                    onStepChange={setCurrentStep}
+                  />
+                </div>
+              </>
+            )}
           </>
+        )}
+      </div>
+
+      <div className="flex-1 relative">
+        {trajectory && (
+          <NetworkGraph
+            currentBlueAction={trajectory.blue_actions[currentStep]}
+            currentRedAction={trajectory.red_actions[currentStep]}
+            previousBlueAction={currentStep > 0 ? trajectory.blue_actions[currentStep - 1] : undefined}
+            previousRedAction={currentStep > 0 ? trajectory.red_actions[currentStep - 1] : undefined}
+            nodeStates={nodeStates}
+          />
         )}
       </div>
     </div>

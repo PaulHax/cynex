@@ -340,7 +340,7 @@ export const NetworkGraph = ({
   return (
     <div
       ref={containerRef}
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+      style={{ width: "100%", height: "100%" }}
     >
       {containerSize && (
         <DeckGL
