@@ -1,20 +1,14 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { OrthographicView, type PickingInfo } from "@deck.gl/core";
 import { ScatterplotLayer, LineLayer, PolygonLayer, PathLayer } from "@deck.gl/layers";
-import {
-  HOSTS,
-  INFRASTRUCTURE_NODES,
-  EDGES,
-  SUBNETS,
-  getAllNodePositions,
-} from "../network/topology";
+import type { LayoutResult, SubnetBounds } from "../network/computeLayout";
 import {
   HOST_TYPE_COLORS,
   AGENT_COLORS,
-  SUBNET_BACKGROUND_COLORS,
   EDGE_COLORS,
   NODE_STATE_COLORS,
+  getSubnetColor,
   type RGBColor,
 } from "../network/colors";
 import type { AgentAction } from "../trajectory/types";
@@ -26,13 +20,13 @@ type NetworkGraphProps = {
   previousBlueAction?: AgentAction;
   previousRedAction?: AgentAction;
   nodeStates?: Map<string, NodeState>;
+  topology: LayoutResult | null;
 };
 
 type TrailData = {
   path: [number, number][];
   color: [number, number, number, number][];
 };
-
 
 type NodeData = {
   id: string;
@@ -64,17 +58,8 @@ const getTooltip = ({ object }: PickingInfo<NodeData>) => {
   };
 };
 
-const INITIAL_VIEW_STATE = {
-  target: [400, 175, 0] as [number, number, number],
-  zoom: 0,
-};
-
 const getNodeRadius = (type: string): number => {
   switch (type) {
-    case "router":
-      return 12;
-    case "firewall":
-      return 10;
     case "server":
       return 16;
     case "defender":
@@ -83,18 +68,6 @@ const getNodeRadius = (type: string): number => {
       return 14;
   }
 };
-
-const createSubnetPolygons = () =>
-  SUBNETS.map((subnet) => ({
-    id: subnet.id,
-    polygon: [
-      [subnet.x, 0],
-      [subnet.x + subnet.width, 0],
-      [subnet.x + subnet.width, 350],
-      [subnet.x, 350],
-    ],
-    color: SUBNET_BACKGROUND_COLORS[subnet.id],
-  }));
 
 const createTrailPath = (
   fromHost: string | undefined,
@@ -145,13 +118,17 @@ export const NetworkGraph = ({
   previousBlueAction,
   previousRedAction,
   nodeStates,
+  topology,
 }: NetworkGraphProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState<{
     width: number;
     height: number;
   } | null>(null);
-  const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
+  const [viewState, setViewState] = useState<{
+    target: [number, number, number];
+    zoom: number;
+  } | null>(null);
 
   const onViewStateChange = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -175,33 +152,95 @@ export const NetworkGraph = ({
     return () => observer.disconnect();
   }, []);
 
-  const nodePositions = getAllNodePositions();
+  useEffect(() => {
+    if (!topology) return;
 
-  const hostNodes = HOSTS.map((host) => ({
-    ...host,
-    position: [host.x, host.y] as [number, number],
-    radius: getNodeRadius(host.type),
-    color: HOST_TYPE_COLORS[host.type] as RGBColor,
-  }));
+    const allX = topology.hosts.map((h) => h.x);
+    const allY = topology.hosts.map((h) => h.y);
 
-  const infraNodes = INFRASTRUCTURE_NODES.map((node) => ({
-    ...node,
-    position: [node.x, node.y] as [number, number],
-    radius: getNodeRadius(node.type),
-    color: HOST_TYPE_COLORS[node.type] as RGBColor,
-  }));
+    if (allX.length === 0) return;
 
-  const allNodes = [...hostNodes, ...infraNodes];
+    const minX = Math.min(...allX);
+    const maxX = Math.max(...allX);
+    const minY = Math.min(...allY);
+    const maxY = Math.max(...allY);
 
-  const edges = EDGES.map((edge) => {
-    const sourcePos = nodePositions.get(edge.source);
-    const targetPos = nodePositions.get(edge.target);
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    setViewState({
+      target: [centerX, centerY, 0],
+      zoom: 0,
+    });
+  }, [topology]);
+
+  const { nodePositions, subnetPolygons, allNodes, subnetConnectionEdges } = useMemo(() => {
+    if (!topology) {
+      return {
+        nodePositions: new Map<string, [number, number]>(),
+        subnetPolygons: [],
+        allNodes: [],
+        subnetConnectionEdges: [],
+      };
+    }
+
+    const positions = new Map<string, [number, number]>();
+    for (const host of topology.hosts) {
+      positions.set(host.id, [host.x, host.y]);
+    }
+
+    const boundsMap = new Map<string, SubnetBounds>();
+    for (const bounds of topology.subnetBounds) {
+      boundsMap.set(bounds.id, bounds);
+    }
+
+    const polygons = topology.subnetBounds.map((bounds, idx) => ({
+      id: bounds.id,
+      polygon: [
+        [bounds.x, bounds.y],
+        [bounds.x + bounds.width, bounds.y],
+        [bounds.x + bounds.width, bounds.y + bounds.height],
+        [bounds.x, bounds.y + bounds.height],
+      ],
+      color: getSubnetColor(idx),
+    }));
+
+    const hostNodes = topology.hosts.map((host) => ({
+      ...host,
+      position: [host.x, host.y] as [number, number],
+      radius: getNodeRadius(host.type),
+      color: HOST_TYPE_COLORS[host.type] as RGBColor,
+    }));
+
+    const connectionEdges = topology.subnetEdges.map((edge) => {
+      const sourceBounds = boundsMap.get(edge.sourceSubnet);
+      const targetBounds = boundsMap.get(edge.targetSubnet);
+
+      if (!sourceBounds || !targetBounds) {
+        return {
+          sourcePosition: [0, 0] as [number, number],
+          targetPosition: [0, 0] as [number, number],
+        };
+      }
+
+      const sourceRight = sourceBounds.x + sourceBounds.width;
+      const sourceCenterY = sourceBounds.y + sourceBounds.height / 2;
+      const targetLeft = targetBounds.x;
+      const targetCenterY = targetBounds.y + targetBounds.height / 2;
+
+      return {
+        sourcePosition: [sourceRight, sourceCenterY] as [number, number],
+        targetPosition: [targetLeft, targetCenterY] as [number, number],
+      };
+    });
+
     return {
-      ...edge,
-      sourcePosition: sourcePos ?? [0, 0],
-      targetPosition: targetPos ?? [0, 0],
+      nodePositions: positions,
+      subnetPolygons: polygons,
+      allNodes: hostNodes,
+      subnetConnectionEdges: connectionEdges,
     };
-  });
+  }, [topology]);
 
   const getHighlightColor = (hostId: string): RGBColor | null => {
     if (currentBlueAction?.Host === hostId) return AGENT_COLORS.blue;
@@ -220,13 +259,15 @@ export const NetworkGraph = ({
     return node.color;
   };
 
-  const trails: TrailData[] = [
-    createTrailPath(previousBlueAction?.Host, currentBlueAction?.Host, AGENT_COLORS.blue, nodePositions, viewState.zoom),
-    createTrailPath(previousRedAction?.Host, currentRedAction?.Host, AGENT_COLORS.red, nodePositions, viewState.zoom),
-  ].filter((t): t is TrailData => t !== null);
+  const trails: TrailData[] = viewState
+    ? [
+        createTrailPath(previousBlueAction?.Host, currentBlueAction?.Host, AGENT_COLORS.blue, nodePositions, viewState.zoom),
+        createTrailPath(previousRedAction?.Host, currentRedAction?.Host, AGENT_COLORS.red, nodePositions, viewState.zoom),
+      ].filter((t): t is TrailData => t !== null)
+    : [];
 
   const worldToScreen = (worldX: number, worldY: number): [number, number] | null => {
-    if (!containerSize) return null;
+    if (!containerSize || !viewState) return null;
     const scale = Math.pow(2, viewState.zoom);
     const [targetX, targetY] = viewState.target;
     const screenX = (worldX - targetX) * scale + containerSize.width / 2;
@@ -249,7 +290,7 @@ export const NetworkGraph = ({
   const layers = [
     new PolygonLayer({
       id: "subnet-backgrounds",
-      data: createSubnetPolygons(),
+      data: subnetPolygons,
       getPolygon: (d) => d.polygon,
       getFillColor: (d) => d.color,
       getLineColor: [0, 0, 0, 0],
@@ -258,13 +299,12 @@ export const NetworkGraph = ({
     }),
 
     new LineLayer({
-      id: "edges",
-      data: edges,
+      id: "subnet-connections",
+      data: subnetConnectionEdges,
       getSourcePosition: (d) => d.sourcePosition,
       getTargetPosition: (d) => d.targetPosition,
-      getColor: (d) =>
-        d.isFirewall ? EDGE_COLORS.firewall : EDGE_COLORS.normal,
-      getWidth: (d) => (d.isFirewall ? 3 : 2),
+      getColor: EDGE_COLORS.firewall,
+      getWidth: 3,
       widthUnits: "pixels",
     }),
 
@@ -302,7 +342,7 @@ export const NetworkGraph = ({
       capRounded: true,
       jointRounded: true,
       updateTriggers: {
-        getPath: [previousBlueAction?.Host, currentBlueAction?.Host, previousRedAction?.Host, currentRedAction?.Host, viewState.zoom],
+        getPath: [previousBlueAction?.Host, currentBlueAction?.Host, previousRedAction?.Host, currentRedAction?.Host, viewState?.zoom],
         getColor: [previousBlueAction?.Host, currentBlueAction?.Host, previousRedAction?.Host, currentRedAction?.Host],
       },
     }),
@@ -336,6 +376,18 @@ export const NetworkGraph = ({
       </div>
     );
   };
+
+  if (!topology || !viewState) {
+    return (
+      <div
+        ref={containerRef}
+        style={{ width: "100%", height: "100%" }}
+        className="flex items-center justify-center text-slate-400"
+      >
+        Loading topology...
+      </div>
+    );
+  }
 
   return (
     <div

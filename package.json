@@ -14,6 +14,7 @@
     "@deck.gl/layers": "^9.2.3",
     "@deck.gl/react": "^9.2.3",
     "@tailwindcss/vite": "^4.1.17",
+    "elkjs": "^0.11.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "tailwindcss": "^4.1.17"

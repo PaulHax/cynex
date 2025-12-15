@@ -5,6 +5,7 @@ import { StepControls } from "./view/StepControls";
 import { TrajectorySelector } from "./view/TrajectorySelector";
 import { loadTrajectoryManifest, loadTrajectory, parseTrajectoryFile } from "./trajectory/loader";
 import { computeNodeStates } from "./trajectory/nodeState";
+import { useNetworkTopology } from "./network/useNetworkTopology";
 import type { TrajectoryFile } from "./trajectory/types";
 
 const App = () => {
@@ -80,6 +81,8 @@ const App = () => {
       currentStep
     );
   }, [trajectory, currentStep]);
+
+  const topology = useNetworkTopology(trajectory);
 
   if (initialLoading) {
     return (
@@ -181,6 +184,7 @@ const App = () => {
             previousBlueAction={currentStep > 0 ? trajectory.blue_actions[currentStep - 1] : undefined}
             previousRedAction={currentStep > 0 ? trajectory.red_actions[currentStep - 1] : undefined}
             nodeStates={nodeStates}
+            topology={topology}
           />
         )}
       </div>

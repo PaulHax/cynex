@@ -17,8 +17,9 @@ Node positions are computed by the `graph-layout` capability and provided to the
 #### Scenario: Display network edges
 
 - **WHEN** the topology is rendered
-- **THEN** edges are drawn showing connectivity (hosts to router, routers through firewalls)
-- **AND** firewall boundaries between subnets are visually distinct
+- **THEN** edges are drawn between adjacent subnets at their boundaries
+- **AND** edges connect from right edge of source subnet to left edge of target subnet
+- **AND** edges are visually distinct (firewall color) to indicate network boundaries
 
 #### Scenario: Support varying network sizes
 
