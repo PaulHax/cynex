@@ -107,10 +107,12 @@ const App = () => {
         </div>
       )}
 
-      <div className={`relative flex-shrink-0 flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? 'w-0 p-0' : 'w-[420px]'}`}>
+      <div className={`relative flex-shrink-0 w-[420px] flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? '-ml-[420px]' : ''}`}>
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute top-4 -right-4 z-10 bg-slate-900 hover:bg-slate-800 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-colors shadow-lg"
+          className={`absolute top-4 z-10 bg-slate-900 hover:bg-slate-800 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-all shadow-lg ${
+            sidebarCollapsed ? 'left-[calc(100%+0.5rem)] right-auto' : '-right-4'
+          }`}
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <svg
@@ -123,55 +125,51 @@ const App = () => {
           </svg>
         </button>
 
-        {!sidebarCollapsed && (
-          <>
-            <header className="flex-shrink-0">
-              <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
-                <div className="flex items-center gap-3">
-                  <TrajectorySelector
-                    onTrajectoryLoad={handleTrajectoryLoad}
-                    currentName={trajectoryName}
-                    loading={dropLoading}
-                    error={dropError}
-                  />
-                </div>
-                {trajectory && (
-                  <p className="text-slate-400 text-sm mt-1">
-                    {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
-                    {trajectory.episode}
-                  </p>
-                )}
-              </div>
-            </header>
-
-            {!trajectory ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
-                  <p className="text-slate-400">Load a trajectory file to get started</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex-1 min-h-0">
-                  <ActionPanel
-                    currentStep={currentStep}
-                    totalSteps={trajectory.blue_actions.length}
-                    blueActions={trajectory.blue_actions}
-                    redActions={trajectory.red_actions}
-                    score={trajectory.metric_scores[currentStep]}
-                    onStepChange={setCurrentStep}
-                  />
-                </div>
-
-                <div className="flex-shrink-0">
-                  <StepControls
-                    currentStep={currentStep}
-                    totalSteps={trajectory.blue_actions.length}
-                    onStepChange={setCurrentStep}
-                  />
-                </div>
-              </>
+        <header className="flex-shrink-0">
+          <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
+            <div className="flex items-center gap-3">
+              <TrajectorySelector
+                onTrajectoryLoad={handleTrajectoryLoad}
+                currentName={trajectoryName}
+                loading={dropLoading}
+                error={dropError}
+              />
+            </div>
+            {trajectory && (
+              <p className="text-slate-400 text-sm mt-1">
+                {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
+                {trajectory.episode}
+              </p>
             )}
+          </div>
+        </header>
+
+        {!trajectory ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
+              <p className="text-slate-400">Load a trajectory file to get started</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex-1 min-h-0">
+              <ActionPanel
+                currentStep={currentStep}
+                totalSteps={trajectory.blue_actions.length}
+                blueActions={trajectory.blue_actions}
+                redActions={trajectory.red_actions}
+                score={trajectory.metric_scores[currentStep]}
+                onStepChange={setCurrentStep}
+              />
+            </div>
+
+            <div className="flex-shrink-0">
+              <StepControls
+                currentStep={currentStep}
+                totalSteps={trajectory.blue_actions.length}
+                onStepChange={setCurrentStep}
+              />
+            </div>
           </>
         )}
       </div>
