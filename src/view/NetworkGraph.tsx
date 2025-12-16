@@ -284,8 +284,69 @@ export const NetworkGraph = ({
     return { x: screenPos[0], y: screenPos[1] + pixelOffset };
   };
 
-  const bluePos = getActionLabelPosition(currentBlueAction, -40);
-  const redPos = getActionLabelPosition(currentRedAction, 40);
+  const TOOLTIP_OFFSET_Y = -40;
+  const TOOLTIP_HEIGHT_ESTIMATE = 28;
+  const NUDGE_MARGIN = 4;
+
+  const estimateTooltipWidth = (actionText: string): number => {
+    const PADDING = 12;
+    const ICON_AND_GAP = 14;
+    const CHAR_WIDTH = 7;
+    return PADDING + ICON_AND_GAP + actionText.length * CHAR_WIDTH;
+  };
+
+  const rawBluePos = getActionLabelPosition(currentBlueAction, TOOLTIP_OFFSET_Y);
+  const rawRedPos = getActionLabelPosition(currentRedAction, TOOLTIP_OFFSET_Y);
+
+  const computeNudgedPositions = (
+    pos1: { x: number; y: number } | null,
+    pos2: { x: number; y: number } | null,
+    action1: AgentAction | undefined,
+    action2: AgentAction | undefined
+  ): [{ x: number; y: number } | null, { x: number; y: number } | null] => {
+    if (!pos1 || !pos2 || !action1 || !action2) return [pos1, pos2];
+
+    const halfWidth1 = estimateTooltipWidth(action1.Action) / 2;
+    const halfWidth2 = estimateTooltipWidth(action2.Action) / 2;
+    const halfHeight = TOOLTIP_HEIGHT_ESTIMATE / 2;
+
+    const box1 = {
+      left: pos1.x - halfWidth1,
+      right: pos1.x + halfWidth1,
+      top: pos1.y - halfHeight,
+      bottom: pos1.y + halfHeight,
+    };
+    const box2 = {
+      left: pos2.x - halfWidth2,
+      right: pos2.x + halfWidth2,
+      top: pos2.y - halfHeight,
+      bottom: pos2.y + halfHeight,
+    };
+
+    const overlapX = box1.right > box2.left && box1.left < box2.right;
+    const overlapY = box1.bottom > box2.top && box1.top < box2.bottom;
+
+    if (overlapX && overlapY) {
+      const overlapAmount = Math.min(box1.right, box2.right) - Math.max(box1.left, box2.left);
+      const nudgeDistance = (overlapAmount / 2) + NUDGE_MARGIN;
+
+      if (pos1.x <= pos2.x) {
+        return [
+          { x: pos1.x - nudgeDistance, y: pos1.y },
+          { x: pos2.x + nudgeDistance, y: pos2.y },
+        ];
+      } else {
+        return [
+          { x: pos1.x + nudgeDistance, y: pos1.y },
+          { x: pos2.x - nudgeDistance, y: pos2.y },
+        ];
+      }
+    }
+
+    return [pos1, pos2];
+  };
+
+  const [bluePos, redPos] = computeNudgedPositions(rawBluePos, rawRedPos, currentBlueAction, currentRedAction);
 
   const layers = [
     new PolygonLayer({
