@@ -17,6 +17,7 @@ const App = () => {
   const [dropError, setDropError] = useState<string | null>(null);
   const [dropLoading, setDropLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     loadTrajectoryManifest().then(async (manifest) => {
@@ -34,11 +35,36 @@ const App = () => {
     });
   }, []);
 
+  const totalSteps = trajectory?.blue_actions.length ?? 0;
+
+  useEffect(() => {
+    if (!isPlaying || totalSteps === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentStep((prev) => {
+        const next = prev + 1;
+        if (next >= totalSteps) {
+          setIsPlaying(false);
+          return prev;
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, totalSteps]);
+
+  const handlePlayToggle = useCallback(() => {
+    if (currentStep >= totalSteps - 1) return;
+    setIsPlaying((prev) => !prev);
+  }, [currentStep, totalSteps]);
+
   const handleTrajectoryLoad = useCallback((data: TrajectoryFile, name: string) => {
     setTrajectory(data);
     setTrajectoryName(name);
     setCurrentStep(0);
     setDropError(null);
+    setIsPlaying(false);
   }, []);
 
   const handleDragOver = useCallback((e: DragEvent) => {
@@ -168,6 +194,8 @@ const App = () => {
                 currentStep={currentStep}
                 totalSteps={trajectory.blue_actions.length}
                 onStepChange={setCurrentStep}
+                isPlaying={isPlaying}
+                onPlayToggle={handlePlayToggle}
               />
             </div>
           </>

@@ -8,7 +8,7 @@ The system SHALL support automatic step advancement with play/stop controls.
 
 - **WHEN** the user clicks the play button
 - **AND** the current step is not the last step
-- **THEN** steps SHALL advance automatically every 2 seconds
+- **THEN** steps SHALL advance automatically every 1 second
 - **AND** the play button SHALL change to a stop button
 
 #### Scenario: Stop playback

@@ -2,12 +2,16 @@ type StepControlsProps = {
   currentStep: number;
   totalSteps: number;
   onStepChange: (step: number) => void;
+  isPlaying: boolean;
+  onPlayToggle: () => void;
 };
 
 export const StepControls = ({
   currentStep,
   totalSteps,
   onStepChange,
+  isPlaying,
+  onPlayToggle,
 }: StepControlsProps) => {
   const handleFirst = () => onStepChange(0);
   const handlePrev = () => onStepChange(Math.max(0, currentStep - 1));
@@ -41,6 +45,14 @@ export const StepControls = ({
           ◀
         </button>
         <button
+          className={`${buttonClass} w-12`}
+          onClick={onPlayToggle}
+          disabled={currentStep >= totalSteps - 1 && !isPlaying}
+          title={isPlaying ? "Stop" : "Play"}
+        >
+          {isPlaying ? "■" : "▶▶"}
+        </button>
+        <button
           className={buttonClass}
           onClick={handleNext}
           disabled={currentStep >= totalSteps - 1}
@@ -56,7 +68,7 @@ export const StepControls = ({
         >
           ▶|
         </button>
-        <span className="ml-4 text-slate-300">
+        <span className="ml-2 text-sm text-slate-300 whitespace-nowrap">
           Step {currentStep + 1} / {totalSteps}
         </span>
       </div>
