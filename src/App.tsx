@@ -110,7 +110,7 @@ const App = () => {
       <div className={`relative flex-shrink-0 flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? 'w-0 p-0' : 'w-[420px]'}`}>
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute top-4 -right-4 z-10 bg-slate-800 hover:bg-slate-700 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-colors shadow-lg"
+          className="absolute top-4 -right-4 z-10 bg-slate-900 hover:bg-slate-800 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-colors shadow-lg"
           title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <svg
@@ -176,7 +176,7 @@ const App = () => {
         )}
       </div>
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative bg-slate-950">
         {trajectory && (
           <NetworkGraph
             currentBlueAction={trajectory.blue_actions[currentStep]}
