@@ -164,7 +164,7 @@ const App = () => {
             {trajectory && (
               <p className="text-slate-400 text-sm mt-1">
                 {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
-                {trajectory.episode}
+                {trajectory.episode} — {Object.keys(trajectory.network_topology).length} hosts
               </p>
             )}
           </div>

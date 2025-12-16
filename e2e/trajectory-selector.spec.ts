@@ -12,7 +12,7 @@ test.describe("Trajectory Selector", () => {
   test("shows trajectory dropdown with available files", async ({ page }) => {
     const dropdown = page.getByRole("combobox");
     await expect(dropdown).toBeVisible();
-    await expect(dropdown).toContainText("default");
+    await expect(dropdown).toContainText("hosts15-ppo-E0");
   });
 
   test("shows load file button", async ({ page }) => {
@@ -32,7 +32,7 @@ test.describe("Trajectory Selector", () => {
     await page.getByRole("button", { name: "Load File..." }).click();
     const fileChooser = await fileChooserPromise;
 
-    await fileChooser.setFiles(resolve(__dirname, "../public/data/trajectories/default.json"));
+    await fileChooser.setFiles(resolve(__dirname, "../public/data/trajectories/hosts15-ppo-E0.json"));
 
     await expect(page.getByText("PPO agent vs RedMeanderAgent_Resilience")).toBeVisible();
   });
@@ -42,7 +42,7 @@ test.describe("Trajectory Selector", () => {
     await expect(page.locator("div").filter({ hasText: /^Step 100 \/ 100$/ })).toBeVisible();
 
     const dropdown = page.getByRole("combobox");
-    await dropdown.selectOption("default.json");
+    await dropdown.selectOption("hosts15-ppo-E0.json");
 
     await expect(page.locator("div").filter({ hasText: /^Step 1 \/ 100$/ })).toBeVisible();
   });
