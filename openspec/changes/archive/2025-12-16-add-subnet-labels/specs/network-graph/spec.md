@@ -31,7 +31,7 @@ Node positions are computed by the `graph-layout` capability and provided to the
 #### Scenario: Display subnet labels
 
 - **WHEN** the topology is rendered
-- **THEN** each subnet region displays a text label at the top-left inside the subnet box
+- **THEN** each subnet region displays a text label just outside the top-left corner of the subnet box
 - **AND** labels show the short subnet name (e.g., "User", "Enterprise", "Op")
 - **AND** labels are rendered using deck.gl TextLayer
 - **AND** label styling is consistent with action labels (dark background, light text)

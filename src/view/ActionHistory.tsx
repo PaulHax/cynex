@@ -40,7 +40,7 @@ export const ActionHistory = ({
   useEffect(() => {
     currentRowRef.current?.scrollIntoView({
       behavior: "smooth",
-      block: "center",
+      block: "nearest",
     });
   }, [currentStep]);
 

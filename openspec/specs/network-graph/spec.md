@@ -32,6 +32,14 @@ Node positions are computed by the `graph-layout` capability and provided to the
 - **AND** the viewport auto-fits to show all nodes
 - **AND** subnet background polygons resize to contain their hosts
 
+#### Scenario: Display subnet labels
+
+- **WHEN** the topology is rendered
+- **THEN** each subnet region displays a text label just outside the top-left corner of the subnet box
+- **AND** labels show the short subnet name (e.g., "User", "Enterprise", "Op")
+- **AND** labels are rendered using deck.gl TextLayer
+- **AND** label styling is consistent with action labels (dark background, light text)
+
 ### Requirement: Node Visual Encoding
 
 The system SHALL encode host type and state through node appearance.

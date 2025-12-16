@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { DeckGL } from "@deck.gl/react";
 import { OrthographicView, type PickingInfo } from "@deck.gl/core";
-import { ScatterplotLayer, LineLayer, PolygonLayer, PathLayer } from "@deck.gl/layers";
+import { ScatterplotLayer, LineLayer, PolygonLayer, PathLayer, TextLayer } from "@deck.gl/layers";
 import type { LayoutResult, SubnetBounds } from "../network/computeLayout";
 import {
   HOST_TYPE_COLORS,
@@ -171,11 +171,12 @@ export const NetworkGraph = ({
     });
   }, [topology]);
 
-  const { nodePositions, subnetPolygons, allNodes, subnetConnectionEdges } = useMemo(() => {
+  const { nodePositions, subnetPolygons, subnetLabels, allNodes, subnetConnectionEdges } = useMemo(() => {
     if (!topology) {
       return {
         nodePositions: new Map<string, [number, number]>(),
         subnetPolygons: [],
+        subnetLabels: [],
         allNodes: [],
         subnetConnectionEdges: [],
       };
@@ -199,6 +200,19 @@ export const NetworkGraph = ({
         [bounds.x + bounds.width, bounds.y + bounds.height],
         [bounds.x, bounds.y + bounds.height],
       ],
+      color: getSubnetColor(idx),
+    }));
+
+    const formatSubnetLabel = (id: string): string => {
+      const parts = id.split("_");
+      const name = parts[0];
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    };
+
+    const labels = topology.subnetBounds.map((bounds, idx) => ({
+      id: bounds.id,
+      text: formatSubnetLabel(bounds.id),
+      position: [bounds.x, bounds.y] as [number, number],
       color: getSubnetColor(idx),
     }));
 
@@ -234,6 +248,7 @@ export const NetworkGraph = ({
     return {
       nodePositions: positions,
       subnetPolygons: polygons,
+      subnetLabels: labels,
       allNodes: hostNodes,
       subnetConnectionEdges: connectionEdges,
     };
@@ -354,6 +369,24 @@ export const NetworkGraph = ({
       getLineColor: [0, 0, 0, 0],
       filled: true,
       stroked: false,
+    }),
+
+    new TextLayer({
+      id: "subnet-labels",
+      data: subnetLabels,
+      getPosition: (d) => d.position,
+      getText: (d) => d.text,
+      getColor: [226, 232, 240],
+      getSize: 12,
+      sizeUnits: "pixels",
+      fontWeight: "bold",
+      background: true,
+      getBackgroundColor: (d) => d.color,
+      backgroundPadding: [0, 0],
+      getTextAnchor: "start",
+      getAlignmentBaseline: "bottom",
+      fontFamily: "system-ui, sans-serif",
+      fontSettings: { sdf: true, fontSize: 64, radius: 24, buffer: 12 },
     }),
 
     new LineLayer({
@@ -489,7 +522,7 @@ export const NetworkGraph = ({
           onHover={onHover}
           width={containerSize.width}
           height={containerSize.height}
-          useDevicePixels={false}
+          useDevicePixels={true}
         />
       )}
       {currentBlueAction && bluePos && (
