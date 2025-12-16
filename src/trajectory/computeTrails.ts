@@ -5,6 +5,7 @@ export type Movement = {
   fromHost: string;
   toHost: string;
   agent: 'blue' | 'red';
+  step: number;
 };
 
 export const getMovementsInRange = (
@@ -25,6 +26,7 @@ export const getMovementsInRange = (
         fromHost: prevBlue.Host,
         toHost: currBlue.Host,
         agent: 'blue',
+        step,
       });
     }
 
@@ -35,6 +37,7 @@ export const getMovementsInRange = (
         fromHost: prevRed.Host,
         toHost: currRed.Host,
         agent: 'red',
+        step,
       });
     }
   }

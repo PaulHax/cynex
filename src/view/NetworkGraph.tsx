@@ -63,16 +63,34 @@ const getNodeRadius = (type: string): number => {
   }
 };
 
+const AGED_COLORS: Record<'blue' | 'red', RGBColor> = {
+  blue: [115, 140, 170], // muted blue
+  red: [165, 105, 100], // muted red
+};
+
+const lerpColor = (
+  from: RGBColor,
+  to: RGBColor,
+  t: number
+): [number, number, number] => [
+  Math.round(from[0] + (to[0] - from[0]) * t),
+  Math.round(from[1] + (to[1] - from[1]) * t),
+  Math.round(from[2] + (to[2] - from[2]) * t),
+];
+
 const createTrailPath = (
   movement: Movement,
   nodePositions: Map<string, [number, number]>,
-  zoom: number
+  zoom: number,
+  ageFactor: number
 ): TrailData | null => {
   const fromPos = nodePositions.get(movement.fromHost);
   const toPos = nodePositions.get(movement.toHost);
   if (!fromPos || !toPos) return null;
 
-  const agentColor = AGENT_COLORS[movement.agent];
+  const freshColor = AGENT_COLORS[movement.agent];
+  const agedColor = AGED_COLORS[movement.agent];
+  const baseColor = lerpColor(agedColor, freshColor, ageFactor);
 
   const dx = toPos[0] - fromPos[0];
   const dy = toPos[1] - fromPos[1];
@@ -97,14 +115,17 @@ const createTrailPath = (
   const path: [number, number][] = [];
   const colors: [number, number, number, number][] = [];
 
+  const minAlpha = 30 + 70 * ageFactor;
+  const maxAlpha = 100 + 155 * ageFactor;
+
   for (let i = 0; i <= segments; i++) {
     const t = i / segments;
     path.push([
       edgeStart[0] + (edgeEnd[0] - edgeStart[0]) * t,
       edgeStart[1] + (edgeEnd[1] - edgeStart[1]) * t,
     ]);
-    const alpha = Math.round(20 + 160 * t);
-    colors.push([agentColor[0], agentColor[1], agentColor[2], alpha]);
+    const alpha = Math.round(minAlpha + (maxAlpha - minAlpha) * t);
+    colors.push([baseColor[0], baseColor[1], baseColor[2], alpha]);
   }
 
   return { path, color: colors };
@@ -385,10 +406,15 @@ export const NetworkGraph = ({
 
   const trails: TrailData[] = useMemo(() => {
     if (!viewState) return [];
+    const rangeSpan = stepRange.end - stepRange.start;
     return movements
-      .map((m) => createTrailPath(m, nodePositions, viewState.zoom))
+      .map((m) => {
+        const ageFactor =
+          rangeSpan > 0 ? (m.step - stepRange.start) / rangeSpan : 1;
+        return createTrailPath(m, nodePositions, viewState.zoom, ageFactor);
+      })
       .filter((t): t is TrailData => t !== null);
-  }, [movements, nodePositions, viewState]);
+  }, [movements, nodePositions, viewState, stepRange]);
 
   const worldToScreen = (
     worldX: number,

@@ -43,20 +43,16 @@ test.describe('Trajectory Selector', () => {
     ).toBeVisible();
   });
 
-  test('selecting trajectory from dropdown resets step to 0', async ({
+  test('selecting trajectory from dropdown resets step range', async ({
     page,
   }) => {
     await page.getByRole('button', { name: '▶|' }).click();
-    await expect(
-      page.locator('div').filter({ hasText: /^Step 100 \/ 100$/ })
-    ).toBeVisible();
+    await expect(page.getByText('Steps 1 - 100 / 100').first()).toBeVisible();
 
     const dropdown = page.getByRole('combobox');
     await dropdown.selectOption('hosts15-ppo-E0.json');
 
-    await expect(
-      page.locator('div').filter({ hasText: /^Step 1 \/ 100$/ })
-    ).toBeVisible();
+    await expect(page.getByText('Steps 1 - 1 / 100').first()).toBeVisible();
   });
 
   test('invalid file shows error', async ({ page }) => {

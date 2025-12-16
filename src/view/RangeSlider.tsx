@@ -59,18 +59,18 @@ export const RangeSlider = ({
     [getPositionFromEvent]
   );
 
-  const handleThumbMouseDown = useCallback(
-    (thumb: 'start' | 'end') => (e: React.MouseEvent) => {
+  const handlePointerDown = useCallback(
+    (thumb: 'start' | 'end') => (e: React.PointerEvent) => {
       e.stopPropagation();
+      e.currentTarget.setPointerCapture(e.pointerId);
       setDragging(thumb);
     },
     []
   );
 
-  useEffect(() => {
-    if (!dragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragging) return;
       const newValue = getPositionFromEvent(e.clientX);
       const current = valueRef.current;
       if (dragging === 'start') {
@@ -83,17 +83,13 @@ export const RangeSlider = ({
           onChangeRef.current({ ...current, end: newValue });
         }
       }
-    };
+    },
+    [dragging, getPositionFromEvent]
+  );
 
-    const handleMouseUp = () => setDragging(null);
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [dragging, getPositionFromEvent]);
+  const handlePointerUp = useCallback(() => {
+    setDragging(null);
+  }, []);
 
   const range = max - min || 1;
   const startPercent = ((value.start - min) / range) * 100;
@@ -114,8 +110,10 @@ export const RangeSlider = ({
       />
       <div
         data-thumb="start"
-        onMouseDown={handleThumbMouseDown('start')}
-        className="absolute top-1/2 w-4 h-4 bg-slate-400 hover:bg-slate-300 rounded-full cursor-grab active:cursor-grabbing shadow-md"
+        onPointerDown={handlePointerDown('start')}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        className="absolute top-1/2 w-4 h-4 bg-slate-400 hover:bg-slate-300 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
         style={{
           left: `${startPercent}%`,
           transform: 'translateX(-50%) translateY(-50%)',
@@ -123,8 +121,10 @@ export const RangeSlider = ({
       />
       <div
         data-thumb="end"
-        onMouseDown={handleThumbMouseDown('end')}
-        className="absolute top-1/2 w-4 h-4 bg-blue-500 hover:bg-blue-400 rounded-full cursor-grab active:cursor-grabbing shadow-md"
+        onPointerDown={handlePointerDown('end')}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        className="absolute top-1/2 w-4 h-4 bg-blue-500 hover:bg-blue-400 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
         style={{
           left: `${endPercent}%`,
           transform: 'translateX(-50%) translateY(-50%)',
