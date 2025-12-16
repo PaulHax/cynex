@@ -19,7 +19,14 @@ export const RangeSlider = ({
   onChange,
 }: RangeSliderProps) => {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState<'start' | 'end' | null>(null);
+  const [dragging, setDragging] = useState<'start' | 'end' | 'center' | null>(
+    null
+  );
+  const dragStartRef = useRef<{
+    clientX: number;
+    start: number;
+    end: number;
+  } | null>(null);
 
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
@@ -68,11 +75,47 @@ export const RangeSlider = ({
     []
   );
 
+  const handleCenterPointerDown = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragStartRef.current = {
+      clientX: e.clientX,
+      start: valueRef.current.start,
+      end: valueRef.current.end,
+    };
+    setDragging('center');
+  }, []);
+
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!dragging) return;
-      const newValue = getPositionFromEvent(e.clientX);
       const current = valueRef.current;
+
+      if (dragging === 'center') {
+        if (!dragStartRef.current || !trackRef.current) return;
+        const rect = trackRef.current.getBoundingClientRect();
+        const pixelDelta = e.clientX - dragStartRef.current.clientX;
+        const valueDelta = Math.round((pixelDelta / rect.width) * (max - min));
+        const rangeWidth =
+          dragStartRef.current.end - dragStartRef.current.start;
+
+        let newStart = dragStartRef.current.start + valueDelta;
+        let newEnd = dragStartRef.current.end + valueDelta;
+
+        if (newStart < min) {
+          newStart = min;
+          newEnd = min + rangeWidth;
+        }
+        if (newEnd > max) {
+          newEnd = max;
+          newStart = max - rangeWidth;
+        }
+
+        onChangeRef.current({ start: newStart, end: newEnd });
+        return;
+      }
+
+      const newValue = getPositionFromEvent(e.clientX);
       if (dragging === 'start') {
         const clampedStart = Math.min(newValue, current.end);
         onChangeRef.current({ ...current, start: clampedStart });
@@ -84,7 +127,7 @@ export const RangeSlider = ({
         }
       }
     },
-    [dragging, getPositionFromEvent]
+    [dragging, getPositionFromEvent, min, max]
   );
 
   const handlePointerUp = useCallback(() => {
@@ -99,10 +142,14 @@ export const RangeSlider = ({
     <div
       ref={trackRef}
       onClick={handleTrackClick}
-      className="relative h-2 bg-slate-700 rounded-lg cursor-pointer"
+      className="relative h-3 bg-slate-700 rounded-lg cursor-pointer"
     >
       <div
-        className="absolute h-full bg-blue-500/40 rounded-lg"
+        data-thumb="center"
+        onPointerDown={handleCenterPointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        className="absolute top-1/2 -translate-y-1/2 h-5 bg-blue-500 hover:bg-blue-400 rounded cursor-grab active:cursor-grabbing touch-none"
         style={{
           left: `${startPercent}%`,
           width: `${endPercent - startPercent}%`,
@@ -113,7 +160,7 @@ export const RangeSlider = ({
         onPointerDown={handlePointerDown('start')}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        className="absolute top-1/2 w-4 h-4 bg-slate-400 hover:bg-slate-300 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
+        className="absolute top-1/2 w-5 h-5 bg-slate-400 hover:bg-slate-300 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
         style={{
           left: `${startPercent}%`,
           transform: 'translateX(-50%) translateY(-50%)',
@@ -124,7 +171,7 @@ export const RangeSlider = ({
         onPointerDown={handlePointerDown('end')}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        className="absolute top-1/2 w-4 h-4 bg-blue-500 hover:bg-blue-400 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
+        className="absolute top-1/2 w-5 h-5 bg-blue-300 hover:bg-blue-200 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
         style={{
           left: `${endPercent}%`,
           transform: 'translateX(-50%) translateY(-50%)',

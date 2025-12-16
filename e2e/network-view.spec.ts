@@ -127,6 +127,39 @@ test.describe('Network Topology View', () => {
     ).toBeVisible();
   });
 
+  test('range slider center drag shifts both start and end', async ({
+    page,
+  }) => {
+    const track = page.locator('.bg-slate-700.rounded-lg').first();
+    const trackBox = await track.boundingBox();
+    if (!trackBox) throw new Error('Track not found');
+
+    await page.mouse.click(
+      trackBox.x + trackBox.width * 0.5,
+      trackBox.y + trackBox.height / 2
+    );
+    await expect(
+      page.getByText(/Steps 1 - (4[5-9]|5[0-5]) \/ 100/).first()
+    ).toBeVisible();
+
+    const center = page.locator('[data-thumb="center"]');
+    const centerBox = await center.boundingBox();
+    if (!centerBox) throw new Error('Center region not found');
+
+    const startX = centerBox.x + centerBox.width / 2;
+    const y = centerBox.y + centerBox.height / 2;
+    const dragDistance = trackBox.width * 0.2;
+
+    await center.hover();
+    await page.mouse.down();
+    await page.mouse.move(startX + dragDistance, y);
+    await page.mouse.up();
+
+    await expect(
+      page.getByText(/Steps (1[5-9]|2[0-5]) - (6[5-9]|7[0-5]) \/ 100/).first()
+    ).toBeVisible();
+  });
+
   test('trail color gradient shows age-based fading', async ({ page }) => {
     await page.getByRole('button', { name: '▶|' }).click();
     await expect(page.getByText('Steps 1 - 100 / 100').first()).toBeVisible();
