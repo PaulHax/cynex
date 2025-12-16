@@ -2,6 +2,11 @@ import type { AgentAction } from "./types";
 
 export type NodeState = "clean" | "user_access" | "root_access";
 
+// Red agent starts on User0 with SYSTEM (root) access via phishing
+const INITIAL_RED_STATE: Record<string, NodeState> = {
+  User0: "root_access",
+};
+
 const USER_ACCESS_ACTIONS = new Set(["ExploitRemoteService"]);
 const ROOT_ACCESS_ACTIONS = new Set(["PrivilegeEscalate", "Impact"]);
 const RESTORE_ACTIONS = new Set(["Restore"]);
@@ -11,7 +16,8 @@ export const computeNodeStates = (
   redActions: AgentAction[],
   upToStep: number
 ): Map<string, NodeState> => {
-  const states = new Map<string, NodeState>();
+  // Initialize with red's starting position (not captured in trajectory actions)
+  const states = new Map<string, NodeState>(Object.entries(INITIAL_RED_STATE));
 
   for (let step = 0; step <= upToStep; step++) {
     const redAction = redActions[step];
