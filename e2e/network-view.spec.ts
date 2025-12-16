@@ -18,8 +18,8 @@ test.describe('Network Topology View', () => {
 
   test('renders ActionPanel with step range info', async ({ page }) => {
     await expect(page.getByText('Steps 1 - 1 / 100').first()).toBeVisible();
-    await expect(page.getByText('🔵 BLUE')).toBeVisible();
-    await expect(page.getByText('🔴 RED')).toBeVisible();
+    await expect(page.getByText('BLUE', { exact: true })).toBeVisible();
+    await expect(page.getByText('RED', { exact: true })).toBeVisible();
   });
 
   test('renders StepControls with navigation buttons', async ({ page }) => {
@@ -133,5 +133,66 @@ test.describe('Network Topology View', () => {
 
     const canvas = page.locator('canvas');
     await expect(canvas).toBeVisible();
+  });
+
+  test('agent visibility toggle buttons are visible', async ({ page }) => {
+    await expect(
+      page.getByRole('button', { name: 'Hide blue agent' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Hide red agent' })
+    ).toBeVisible();
+  });
+
+  test('clicking blue visibility toggle changes button title', async ({
+    page,
+  }) => {
+    const blueToggle = page.getByRole('button', { name: 'Hide blue agent' });
+    await expect(blueToggle).toBeVisible();
+
+    await blueToggle.click();
+
+    await expect(
+      page.getByRole('button', { name: 'Show blue agent' })
+    ).toBeVisible();
+  });
+
+  test('clicking red visibility toggle changes button title', async ({
+    page,
+  }) => {
+    const redToggle = page.getByRole('button', { name: 'Hide red agent' });
+    await expect(redToggle).toBeVisible();
+
+    await redToggle.click();
+
+    await expect(
+      page.getByRole('button', { name: 'Show red agent' })
+    ).toBeVisible();
+  });
+
+  test('visibility toggles can be toggled back on', async ({ page }) => {
+    const blueToggle = page.getByRole('button', { name: 'Hide blue agent' });
+    await blueToggle.click();
+    await expect(
+      page.getByRole('button', { name: 'Show blue agent' })
+    ).toBeVisible();
+
+    await page.getByRole('button', { name: 'Show blue agent' }).click();
+
+    await expect(
+      page.getByRole('button', { name: 'Hide blue agent' })
+    ).toBeVisible();
+  });
+
+  test('both agents can be hidden simultaneously', async ({ page }) => {
+    await page.getByRole('button', { name: 'Hide blue agent' }).click();
+    await page.getByRole('button', { name: 'Hide red agent' }).click();
+
+    await expect(
+      page.getByRole('button', { name: 'Show blue agent' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Show red agent' })
+    ).toBeVisible();
   });
 });

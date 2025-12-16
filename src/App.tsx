@@ -19,6 +19,8 @@ import { computeNodeStates } from './trajectory/nodeState';
 import { useNetworkTopology } from './network/useNetworkTopology';
 import type { TrajectoryFile } from './trajectory/types';
 
+export type AgentVisibility = { blue: boolean; red: boolean };
+
 const App = () => {
   const [trajectory, setTrajectory] = useState<TrajectoryFile | null>(null);
   const [trajectoryName, setTrajectoryName] = useState<string | null>(null);
@@ -29,6 +31,10 @@ const App = () => {
   const [dropLoading, setDropLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [agentVisibility, setAgentVisibility] = useState<AgentVisibility>({
+    blue: true,
+    red: true,
+  });
 
   useEffect(() => {
     loadTrajectoryManifest().then(async (manifest) => {
@@ -217,6 +223,8 @@ const App = () => {
                 redActions={trajectory.red_actions}
                 score={trajectory.metric_scores[stepRange.end]}
                 onStepRangeChange={setStepRange}
+                agentVisibility={agentVisibility}
+                onAgentVisibilityChange={setAgentVisibility}
               />
             </div>
 
@@ -241,6 +249,7 @@ const App = () => {
             stepRange={stepRange}
             nodeStates={nodeStates}
             topology={topology}
+            agentVisibility={agentVisibility}
           />
         )}
       </div>

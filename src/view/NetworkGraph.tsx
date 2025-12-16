@@ -20,6 +20,7 @@ import {
 import type { AgentAction } from '../trajectory/types';
 import type { NodeState } from '../trajectory/nodeState';
 import type { StepRange } from './RangeSlider';
+import type { AgentVisibility } from '../App';
 import {
   getMovementsInRange,
   type Movement,
@@ -31,6 +32,7 @@ type NetworkGraphProps = {
   stepRange: StepRange;
   nodeStates?: Map<string, NodeState>;
   topology: LayoutResult | null;
+  agentVisibility: AgentVisibility;
 };
 
 type TrailData = {
@@ -206,6 +208,7 @@ export const NetworkGraph = ({
   stepRange,
   nodeStates,
   topology,
+  agentVisibility,
 }: NetworkGraphProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState<{
@@ -383,8 +386,10 @@ export const NetworkGraph = ({
   }, [topology]);
 
   const getHighlightColor = (hostId: string): RGBColor | null => {
-    if (currentBlueAction?.Host === hostId) return AGENT_COLORS.blue;
-    if (currentRedAction?.Host === hostId) return AGENT_COLORS.red;
+    if (agentVisibility.blue && currentBlueAction?.Host === hostId)
+      return AGENT_COLORS.blue;
+    if (agentVisibility.red && currentRedAction?.Host === hostId)
+      return AGENT_COLORS.red;
     return null;
   };
 
@@ -400,8 +405,11 @@ export const NetworkGraph = ({
   };
 
   const movements = useMemo(
-    () => getMovementsInRange(blueActions, redActions, stepRange),
-    [blueActions, redActions, stepRange]
+    () =>
+      getMovementsInRange(blueActions, redActions, stepRange).filter(
+        (m) => agentVisibility[m.agent]
+      ),
+    [blueActions, redActions, stepRange, agentVisibility]
   );
 
   const trails: TrailData[] = useMemo(() => {
@@ -571,8 +579,16 @@ export const NetworkGraph = ({
       pickable: true,
       updateTriggers: {
         getFillColor: [nodeStates],
-        getLineColor: [currentBlueAction?.Host, currentRedAction?.Host],
-        getLineWidth: [currentBlueAction?.Host, currentRedAction?.Host],
+        getLineColor: [
+          currentBlueAction?.Host,
+          currentRedAction?.Host,
+          agentVisibility,
+        ],
+        getLineWidth: [
+          currentBlueAction?.Host,
+          currentRedAction?.Host,
+          agentVisibility,
+        ],
       },
     }),
 
@@ -622,14 +638,14 @@ export const NetworkGraph = ({
           useDevicePixels={true}
         />
       )}
-      {currentBlueAction && bluePos && (
+      {agentVisibility.blue && currentBlueAction && bluePos && (
         <ActionLabel
           action={currentBlueAction}
           position={bluePos}
           color="#60a5fa"
         />
       )}
-      {currentRedAction && redPos && (
+      {agentVisibility.red && currentRedAction && redPos && (
         <ActionLabel
           action={currentRedAction}
           position={redPos}
