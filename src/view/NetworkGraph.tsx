@@ -37,25 +37,9 @@ type NodeData = {
   color: RGBColor;
 };
 
-const getTooltip = ({ object }: PickingInfo<NodeData>) => {
-  if (!object) return null;
-
-  const lines = [object.id, `Type: ${object.type}`];
-  if (object.subnet) {
-    lines.push(`Subnet: ${object.subnet}`);
-  }
-
-  return {
-    html: lines.map((line) => `<div>${line}</div>`).join(""),
-    style: {
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      color: "white",
-      padding: "8px 12px",
-      borderRadius: "4px",
-      fontSize: "12px",
-      fontFamily: "monospace",
-    },
-  };
+const Z_INDEX = {
+  ACTION_LABEL: 10,
+  HOST_TOOLTIP: 20,
 };
 
 const getNodeRadius = (type: string): number => {
@@ -129,6 +113,19 @@ export const NetworkGraph = ({
     target: [number, number, number];
     zoom: number;
   } | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<{
+    node: NodeData;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const onHover = useCallback((info: PickingInfo<NodeData>) => {
+    if (info.object && info.x !== undefined && info.y !== undefined) {
+      setHoveredNode({ node: info.object, x: info.x, y: info.y });
+    } else {
+      setHoveredNode(null);
+    }
+  }, []);
 
   const onViewStateChange = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -430,6 +427,7 @@ export const NetworkGraph = ({
           display: "flex",
           alignItems: "center",
           gap: "4px",
+          zIndex: Z_INDEX.ACTION_LABEL,
         }}
       >
         <span style={{ color: statusColor }}>{statusIcon}</span>
@@ -437,6 +435,29 @@ export const NetworkGraph = ({
       </div>
     );
   };
+
+  const HostTooltip = ({ node, x, y }: { node: NodeData; x: number; y: number }) => (
+    <div
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        transform: "translate(10px, 10px)",
+        backgroundColor: "rgba(0, 0, 0, 0.9)",
+        color: "white",
+        padding: "8px 12px",
+        borderRadius: "4px",
+        fontSize: "12px",
+        fontFamily: "monospace",
+        pointerEvents: "none",
+        zIndex: Z_INDEX.HOST_TOOLTIP,
+      }}
+    >
+      <div>{node.id}</div>
+      <div>Type: {node.type}</div>
+      {node.subnet && <div>Subnet: {node.subnet}</div>}
+    </div>
+  );
 
   if (!topology || !viewState) {
     return (
@@ -465,7 +486,7 @@ export const NetworkGraph = ({
             inertia: true,
           }}
           layers={layers}
-          getTooltip={getTooltip}
+          onHover={onHover}
           width={containerSize.width}
           height={containerSize.height}
           useDevicePixels={false}
@@ -476,6 +497,9 @@ export const NetworkGraph = ({
       )}
       {currentRedAction && redPos && (
         <ActionLabel action={currentRedAction} position={redPos} color="#f87171" />
+      )}
+      {hoveredNode && (
+        <HostTooltip node={hoveredNode.node} x={hoveredNode.x} y={hoveredNode.y} />
       )}
     </div>
   );
