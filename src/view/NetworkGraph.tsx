@@ -150,26 +150,33 @@ export const NetworkGraph = ({
   }, []);
 
   useEffect(() => {
-    if (!topology) return;
+    if (!topology || !containerSize) return;
 
-    const allX = topology.hosts.map((h) => h.x);
-    const allY = topology.hosts.map((h) => h.y);
+    const bounds = topology.subnetBounds;
+    if (bounds.length === 0) return;
 
-    if (allX.length === 0) return;
+    const minX = Math.min(...bounds.map((b) => b.x));
+    const maxX = Math.max(...bounds.map((b) => b.x + b.width));
+    const minY = Math.min(...bounds.map((b) => b.y));
+    const maxY = Math.max(...bounds.map((b) => b.y + b.height));
 
-    const minX = Math.min(...allX);
-    const maxX = Math.max(...allX);
-    const minY = Math.min(...allY);
-    const maxY = Math.max(...allY);
-
+    const boundsWidth = maxX - minX;
+    const boundsHeight = maxY - minY;
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
 
+    const padding = 40;
+    const availableWidth = containerSize.width - padding * 2;
+    const availableHeight = containerSize.height - padding * 2;
+
+    const scale = Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight);
+    const zoom = Math.log2(scale);
+
     setViewState({
       target: [centerX, centerY, 0],
-      zoom: 0,
+      zoom,
     });
-  }, [topology]);
+  }, [topology, containerSize]);
 
   const { nodePositions, subnetPolygons, subnetLabels, allNodes, subnetConnectionEdges } = useMemo(() => {
     if (!topology) {
