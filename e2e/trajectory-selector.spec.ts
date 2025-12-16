@@ -16,13 +16,11 @@ test.describe('Trajectory Selector', () => {
   });
 
   test('shows load file button', async ({ page }) => {
-    await expect(
-      page.getByRole('button', { name: 'Load File...' })
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Load File' })).toBeVisible();
   });
 
   test('shows drag-and-drop zone', async ({ page }) => {
-    await expect(page.getByText('or drag JSON')).toBeVisible();
+    await expect(page.getByText("or drag 'n drop")).toBeVisible();
   });
 
   test('loads default trajectory on startup', async ({ page }) => {
@@ -33,7 +31,7 @@ test.describe('Trajectory Selector', () => {
 
   test('load file via file picker', async ({ page }) => {
     const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.getByRole('button', { name: 'Load File...' }).click();
+    await page.getByRole('button', { name: 'Load File' }).click();
     const fileChooser = await fileChooserPromise;
 
     await fileChooser.setFiles(
@@ -63,7 +61,7 @@ test.describe('Trajectory Selector', () => {
 
   test('invalid file shows error', async ({ page }) => {
     const fileChooserPromise = page.waitForEvent('filechooser');
-    await page.getByRole('button', { name: 'Load File...' }).click();
+    await page.getByRole('button', { name: 'Load File' }).click();
     const fileChooser = await fileChooserPromise;
 
     await fileChooser.setFiles(resolve(__dirname, '../package.json'));
@@ -74,11 +72,21 @@ test.describe('Trajectory Selector', () => {
   });
 
   test('drag zone highlights on drag over', async ({ page }) => {
-    const dropZone = page.getByText('or drag JSON');
+    const appContainer = page.locator('.h-full.bg-slate-900').first();
 
-    const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
-    await dropZone.dispatchEvent('dragover', { dataTransfer });
+    await appContainer.evaluate((el) => {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(
+        new File(['{}'], 'test.json', { type: 'application/json' })
+      );
+      const event = new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer,
+      });
+      el.dispatchEvent(event);
+    });
 
-    await expect(page.getByText('Drop here')).toBeVisible();
+    await expect(page.getByText('Drop trajectory JSON here')).toBeVisible();
   });
 });

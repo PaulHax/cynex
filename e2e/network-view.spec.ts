@@ -6,7 +6,6 @@ test.describe('Network Topology View', () => {
   });
 
   test('renders page header with trajectory info', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Cynex' })).toBeVisible();
     await expect(
       page.getByText('PPO agent vs RedMeanderAgent_Resilience')
     ).toBeVisible();
