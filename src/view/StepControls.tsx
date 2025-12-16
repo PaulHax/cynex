@@ -15,7 +15,8 @@ export const StepControls = ({
 }: StepControlsProps) => {
   const handleFirst = () => onStepChange(0);
   const handlePrev = () => onStepChange(Math.max(0, currentStep - 1));
-  const handleNext = () => onStepChange(Math.min(totalSteps - 1, currentStep + 1));
+  const handleNext = () =>
+    onStepChange(Math.min(totalSteps - 1, currentStep + 1));
   const handleLast = () => onStepChange(totalSteps - 1);
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,7 +24,7 @@ export const StepControls = ({
   };
 
   const buttonClass =
-    "px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded disabled:opacity-50 disabled:cursor-not-allowed";
+    'px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
@@ -48,9 +49,9 @@ export const StepControls = ({
           className={`${buttonClass} w-12`}
           onClick={onPlayToggle}
           disabled={currentStep >= totalSteps - 1 && !isPlaying}
-          title={isPlaying ? "Stop" : "Play"}
+          title={isPlaying ? 'Stop' : 'Play'}
         >
-          {isPlaying ? "■" : "▶▶"}
+          {isPlaying ? '■' : '▶▶'}
         </button>
         <button
           className={buttonClass}

@@ -1,15 +1,15 @@
-import type { AgentAction } from "./types";
+import type { AgentAction } from './types';
 
-export type NodeState = "clean" | "user_access" | "root_access";
+export type NodeState = 'clean' | 'user_access' | 'root_access';
 
 // Red agent starts on User0 with SYSTEM (root) access via phishing
 const INITIAL_RED_STATE: Record<string, NodeState> = {
-  User0: "root_access",
+  User0: 'root_access',
 };
 
-const USER_ACCESS_ACTIONS = new Set(["ExploitRemoteService"]);
-const ROOT_ACCESS_ACTIONS = new Set(["PrivilegeEscalate", "Impact"]);
-const RESTORE_ACTIONS = new Set(["Restore"]);
+const USER_ACCESS_ACTIONS = new Set(['ExploitRemoteService']);
+const ROOT_ACCESS_ACTIONS = new Set(['PrivilegeEscalate', 'Impact']);
+const RESTORE_ACTIONS = new Set(['Restore']);
 
 export const computeNodeStates = (
   blueActions: AgentAction[],
@@ -23,20 +23,20 @@ export const computeNodeStates = (
     const redAction = redActions[step];
     const blueAction = blueActions[step];
 
-    if (redAction?.Status === "TRUE" && redAction.Host !== redAction.Action) {
+    if (redAction?.Status === 'TRUE' && redAction.Host !== redAction.Action) {
       if (USER_ACCESS_ACTIONS.has(redAction.Action)) {
-        states.set(redAction.Host, "user_access");
+        states.set(redAction.Host, 'user_access');
       } else if (ROOT_ACCESS_ACTIONS.has(redAction.Action)) {
-        states.set(redAction.Host, "root_access");
+        states.set(redAction.Host, 'root_access');
       }
     }
 
     if (
-      blueAction?.Status === "TRUE" &&
+      blueAction?.Status === 'TRUE' &&
       RESTORE_ACTIONS.has(blueAction.Action) &&
       blueAction.Host !== blueAction.Action
     ) {
-      states.set(blueAction.Host, "clean");
+      states.set(blueAction.Host, 'clean');
     }
   }
 

@@ -1,10 +1,13 @@
-import ELK, { type ElkNode, type ElkExtendedEdge } from "elkjs/lib/elk.bundled.js";
+import ELK, {
+  type ElkNode,
+  type ElkExtendedEdge,
+} from 'elkjs/lib/elk.bundled.js';
 import type {
   ExtractedTopology,
   HostDefinition,
   SubnetDefinition,
   SubnetEdge,
-} from "./extractTopology";
+} from './extractTopology';
 
 export type SubnetBounds = {
   id: string;
@@ -48,7 +51,8 @@ const computeCenteredGrid = (
     const colInRow = i % cols;
     const nodesInRow = row < rows - 1 ? cols : nodeCount - row * cols;
     const rowWidth = nodesInRow * NODE_WIDTH + (nodesInRow - 1) * NODE_SPACING;
-    const rowStartX = subnetX + PADDING.left + (availableWidth - rowWidth) / 2 + NODE_WIDTH / 2;
+    const rowStartX =
+      subnetX + PADDING.left + (availableWidth - rowWidth) / 2 + NODE_WIDTH / 2;
 
     positions.push({
       x: rowStartX + colInRow * (NODE_WIDTH + NODE_SPACING),
@@ -67,7 +71,11 @@ const computeDefenderPosition = (
 ): { x: number; y: number } => {
   const availableWidth = subnetWidth - PADDING.left - PADDING.right;
   const singleNodeRowWidth = NODE_WIDTH;
-  const x = subnetX + PADDING.left + (availableWidth - singleNodeRowWidth) / 2 + NODE_WIDTH / 2;
+  const x =
+    subnetX +
+    PADDING.left +
+    (availableWidth - singleNodeRowWidth) / 2 +
+    NODE_WIDTH / 2;
   const y = subnetY + subnetHeight - PADDING.bottom - NODE_HEIGHT / 2;
   return { x, y };
 };
@@ -101,7 +109,7 @@ export const computeLayout = async (
   }
 
   for (const host of topology.hosts) {
-    if (host.type === "defender") {
+    if (host.type === 'defender') {
       defenderBySubnet.set(host.subnet, host);
     } else {
       const hosts = regularHostsBySubnet.get(host.subnet);
@@ -129,12 +137,12 @@ export const computeLayout = async (
   }));
 
   const graph: ElkNode = {
-    id: "root",
+    id: 'root',
     layoutOptions: {
-      "elk.algorithm": "layered",
-      "elk.direction": "RIGHT",
-      "elk.spacing.nodeNode": "40",
-      "elk.layered.spacing.nodeNodeBetweenLayers": "40",
+      'elk.algorithm': 'layered',
+      'elk.direction': 'RIGHT',
+      'elk.spacing.nodeNode': '40',
+      'elk.layered.spacing.nodeNodeBetweenLayers': '40',
     },
     children: subnetNodes,
     edges: elkEdges,
@@ -144,8 +152,8 @@ export const computeLayout = async (
 
   const subnetBoundsMap = new Map<string, SubnetBounds>();
   for (const node of layoutedGraph.children ?? []) {
-    if (node.id.startsWith("subnet_")) {
-      const subnetId = node.id.replace("subnet_", "");
+    if (node.id.startsWith('subnet_')) {
+      const subnetId = node.id.replace('subnet_', '');
       subnetBoundsMap.set(subnetId, {
         id: subnetId,
         x: node.x ?? 0,

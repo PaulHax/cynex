@@ -1,6 +1,6 @@
-import type { TrajectoryFile, HostInfo } from "../trajectory/types";
+import type { TrajectoryFile, HostInfo } from '../trajectory/types';
 
-export type HostType = "workstation" | "server" | "defender";
+export type HostType = 'workstation' | 'server' | 'defender';
 
 export type HostDefinition = {
   id: string;
@@ -29,25 +29,31 @@ export type ExtractedTopology = {
   subnetEdges: SubnetEdge[];
 };
 
-const SERVER_PATTERNS = ["Server", "Database", "Auth", "Front", "Enterprise"];
+const SERVER_PATTERNS = ['Server', 'Database', 'Auth', 'Front', 'Enterprise'];
 
 const inferHostType = (hostname: string): HostType => {
-  if (hostname === "Defender") return "defender";
-  if (SERVER_PATTERNS.some((p) => hostname.includes(p))) return "server";
-  return "workstation";
+  if (hostname === 'Defender') return 'defender';
+  if (SERVER_PATTERNS.some((p) => hostname.includes(p))) return 'server';
+  return 'workstation';
 };
 
 const getNonLoopbackSubnet = (hostInfo: HostInfo): string | null => {
   for (const iface of hostInfo.Interface) {
-    if (iface["Interface Name"] !== "lo" && iface.Subnet.network_address !== "127.0.0.0") {
+    if (
+      iface['Interface Name'] !== 'lo' &&
+      iface.Subnet.network_address !== '127.0.0.0'
+    ) {
       return iface.Subnet.network_address;
     }
   }
   return null;
 };
 
-const deriveSubnetLabel = (networkAddress: string, hostnames: string[]): string => {
-  const prefixes = ["User", "Enterprise", "Op"];
+const deriveSubnetLabel = (
+  networkAddress: string,
+  hostnames: string[]
+): string => {
+  const prefixes = ['User', 'Enterprise', 'Op'];
   for (const prefix of prefixes) {
     if (hostnames.some((h) => h.startsWith(prefix))) {
       return prefix;
@@ -57,7 +63,7 @@ const deriveSubnetLabel = (networkAddress: string, hostnames: string[]): string 
 };
 
 export const extractTopology = (
-  networkTopology: TrajectoryFile["network_topology"]
+  networkTopology: TrajectoryFile['network_topology']
 ): ExtractedTopology => {
   const subnetHostMap = new Map<string, string[]>();
   const hostSubnetMap = new Map<string, string>();
@@ -72,7 +78,7 @@ export const extractTopology = (
     }
   }
 
-  const SUBNET_ORDER = ["User", "Enterprise", "Op"];
+  const SUBNET_ORDER = ['User', 'Enterprise', 'Op'];
 
   const getSubnetSortKey = (networkAddr: string): number => {
     const hostnames = subnetHostMap.get(networkAddr) ?? [];
@@ -88,7 +94,7 @@ export const extractTopology = (
     return getSubnetSortKey(a) - getSubnetSortKey(b);
   });
 
-  const subnets: SubnetDefinition[] = sortedSubnetAddrs.map((addr, _idx) => {
+  const subnets: SubnetDefinition[] = sortedSubnetAddrs.map((addr) => {
     const hostnames = subnetHostMap.get(addr) ?? [];
     const label = deriveSubnetLabel(addr, hostnames);
     return {
@@ -100,17 +106,19 @@ export const extractTopology = (
     };
   });
 
-  const hosts: HostDefinition[] = Object.keys(networkTopology).map((hostname) => {
-    const subnetAddr = hostSubnetMap.get(hostname);
-    const subnet = subnets.find((s) => s.networkAddress === subnetAddr);
-    return {
-      id: hostname,
-      subnet: subnet?.id ?? "unknown",
-      type: inferHostType(hostname),
-      x: 0,
-      y: 0,
-    };
-  });
+  const hosts: HostDefinition[] = Object.keys(networkTopology).map(
+    (hostname) => {
+      const subnetAddr = hostSubnetMap.get(hostname);
+      const subnet = subnets.find((s) => s.networkAddress === subnetAddr);
+      return {
+        id: hostname,
+        subnet: subnet?.id ?? 'unknown',
+        type: inferHostType(hostname),
+        x: 0,
+        y: 0,
+      };
+    }
+  );
 
   const subnetEdges: SubnetEdge[] = [];
   for (let i = 0; i < subnets.length - 1; i++) {

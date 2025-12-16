@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import type { AgentAction } from "../trajectory/types";
+import { useEffect, useRef } from 'react';
+import type { AgentAction } from '../trajectory/types';
 
 type ActionHistoryProps = {
   blueActions: AgentAction[];
@@ -8,9 +8,9 @@ type ActionHistoryProps = {
   onStepChange: (step: number) => void;
 };
 
-const StatusIndicator = ({ status }: { status: "TRUE" | "FALSE" }) => (
-  <span className={status === "TRUE" ? "text-green-400" : "text-slate-500"}>
-    {status === "TRUE" ? "✓" : "✗"}
+const StatusIndicator = ({ status }: { status: 'TRUE' | 'FALSE' }) => (
+  <span className={status === 'TRUE' ? 'text-green-400' : 'text-slate-500'}>
+    {status === 'TRUE' ? '✓' : '✗'}
   </span>
 );
 
@@ -39,8 +39,8 @@ export const ActionHistory = ({
 
   useEffect(() => {
     currentRowRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
+      behavior: 'smooth',
+      block: 'nearest',
     });
   }, [currentStep]);
 
@@ -55,7 +55,10 @@ export const ActionHistory = ({
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto space-y-1 action-history-scroll"
-        style={{ scrollbarWidth: "thin", scrollbarColor: "#475569 transparent" }}
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#475569 transparent',
+        }}
       >
         {allSteps.map((step) => (
           <div
@@ -64,8 +67,8 @@ export const ActionHistory = ({
             onClick={() => onStepChange(step)}
             className={`flex gap-2 py-1.5 px-2 rounded text-xs cursor-pointer ${
               step === currentStep
-                ? "bg-slate-600/80 border-l-2 border-slate-400"
-                : "opacity-70 hover:opacity-100 hover:bg-slate-700/50"
+                ? 'bg-slate-600/80 border-l-2 border-slate-400'
+                : 'opacity-70 hover:opacity-100 hover:bg-slate-700/50'
             }`}
           >
             <div className="text-slate-500 w-5 shrink-0">{step + 1}</div>

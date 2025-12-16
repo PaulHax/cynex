@@ -1,6 +1,6 @@
-import type { AgentAction, MetricScore } from "../trajectory/types";
-import { MetricsCard } from "./MetricsCard";
-import { ActionHistory } from "./ActionHistory";
+import type { AgentAction, MetricScore } from '../trajectory/types';
+import { MetricsCard } from './MetricsCard';
+import { ActionHistory } from './ActionHistory';
 
 type ActionPanelProps = {
   currentStep: number;

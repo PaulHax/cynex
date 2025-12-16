@@ -1,8 +1,14 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { DeckGL } from "@deck.gl/react";
-import { OrthographicView, type PickingInfo } from "@deck.gl/core";
-import { ScatterplotLayer, LineLayer, PolygonLayer, PathLayer, TextLayer } from "@deck.gl/layers";
-import type { LayoutResult, SubnetBounds } from "../network/computeLayout";
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { DeckGL } from '@deck.gl/react';
+import { OrthographicView, type PickingInfo } from '@deck.gl/core';
+import {
+  ScatterplotLayer,
+  LineLayer,
+  PolygonLayer,
+  PathLayer,
+  TextLayer,
+} from '@deck.gl/layers';
+import type { LayoutResult, SubnetBounds } from '../network/computeLayout';
 import {
   HOST_TYPE_COLORS,
   AGENT_COLORS,
@@ -10,9 +16,9 @@ import {
   NODE_STATE_COLORS,
   getSubnetColor,
   type RGBColor,
-} from "../network/colors";
-import type { AgentAction } from "../trajectory/types";
-import type { NodeState } from "../trajectory/nodeState";
+} from '../network/colors';
+import type { AgentAction } from '../trajectory/types';
+import type { NodeState } from '../trajectory/nodeState';
 
 type NetworkGraphProps = {
   currentBlueAction?: AgentAction;
@@ -44,9 +50,9 @@ const Z_INDEX = {
 
 const getNodeRadius = (type: string): number => {
   switch (type) {
-    case "server":
+    case 'server':
       return 16;
-    case "defender":
+    case 'defender':
       return 16;
     default:
       return 14;
@@ -76,8 +82,14 @@ const createTrailPath = (
   const scale = Math.pow(2, zoom);
   const worldGap = pixelGap / scale;
 
-  const edgeStart: [number, number] = [fromPos[0] + ux * worldGap, fromPos[1] + uy * worldGap];
-  const edgeEnd: [number, number] = [toPos[0] - ux * worldGap, toPos[1] - uy * worldGap];
+  const edgeStart: [number, number] = [
+    fromPos[0] + ux * worldGap,
+    fromPos[1] + uy * worldGap,
+  ];
+  const edgeEnd: [number, number] = [
+    toPos[0] - ux * worldGap,
+    toPos[1] - uy * worldGap,
+  ];
 
   const segments = 10;
   const path: [number, number][] = [];
@@ -96,6 +108,75 @@ const createTrailPath = (
   return { path, color: colors };
 };
 
+const ActionLabel = ({
+  action,
+  position,
+  color,
+}: {
+  action: AgentAction;
+  position: { x: number; y: number };
+  color: string;
+}) => {
+  const statusIcon = action.Status === 'TRUE' ? '✓' : '✗';
+  const statusColor = action.Status === 'TRUE' ? '#4ade80' : '#94a3b8';
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: position.x,
+        top: position.y,
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+        border: `1px solid ${color}`,
+        borderRadius: '4px',
+        padding: '4px 8px',
+        fontSize: '12px',
+        fontWeight: 500,
+        whiteSpace: 'nowrap',
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        zIndex: Z_INDEX.ACTION_LABEL,
+      }}
+    >
+      <span style={{ color: statusColor }}>{statusIcon}</span>
+      <span style={{ color: '#e2e8f0' }}>{action.Action}</span>
+    </div>
+  );
+};
+
+const HostTooltip = ({
+  node,
+  x,
+  y,
+}: {
+  node: NodeData;
+  x: number;
+  y: number;
+}) => (
+  <div
+    style={{
+      position: 'absolute',
+      left: x,
+      top: y,
+      transform: 'translate(10px, 10px)',
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      color: 'white',
+      padding: '8px 12px',
+      borderRadius: '4px',
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      pointerEvents: 'none',
+      zIndex: Z_INDEX.HOST_TOOLTIP,
+    }}
+  >
+    <div>{node.id}</div>
+    <div>Type: {node.type}</div>
+    {node.subnet && <div>Subnet: {node.subnet}</div>}
+  </div>
+);
+
 export const NetworkGraph = ({
   currentBlueAction,
   currentRedAction,
@@ -109,9 +190,9 @@ export const NetworkGraph = ({
     width: number;
     height: number;
   } | null>(null);
-  const [viewState, setViewState] = useState<{
-    target: [number, number, number];
-    zoom: number;
+  const [userViewState, setUserViewState] = useState<{
+    viewState: { target: [number, number, number]; zoom: number };
+    forTopology: LayoutResult | null;
   } | null>(null);
   const [hoveredNode, setHoveredNode] = useState<{
     node: NodeData;
@@ -129,8 +210,9 @@ export const NetworkGraph = ({
 
   const onViewStateChange = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ({ viewState }: { viewState: any }) => setViewState(viewState),
-    [],
+    ({ viewState }: { viewState: any }) =>
+      setUserViewState({ viewState, forTopology: topology }),
+    [topology]
   );
 
   useEffect(() => {
@@ -149,11 +231,11 @@ export const NetworkGraph = ({
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!topology || !containerSize) return;
+  const initialViewState = useMemo(() => {
+    if (!topology || !containerSize) return null;
 
     const bounds = topology.subnetBounds;
-    if (bounds.length === 0) return;
+    if (bounds.length === 0) return null;
 
     const minX = Math.min(...bounds.map((b) => b.x));
     const maxX = Math.max(...bounds.map((b) => b.x + b.width));
@@ -169,16 +251,30 @@ export const NetworkGraph = ({
     const availableWidth = containerSize.width - padding * 2;
     const availableHeight = containerSize.height - padding * 2;
 
-    const scale = Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight);
+    const scale = Math.min(
+      availableWidth / boundsWidth,
+      availableHeight / boundsHeight
+    );
     const zoom = Math.log2(scale);
 
-    setViewState({
-      target: [centerX, centerY, 0],
+    return {
+      target: [centerX, centerY, 0] as [number, number, number],
       zoom,
-    });
+    };
   }, [topology, containerSize]);
 
-  const { nodePositions, subnetPolygons, subnetLabels, allNodes, subnetConnectionEdges } = useMemo(() => {
+  const viewState =
+    userViewState?.forTopology === topology
+      ? userViewState.viewState
+      : initialViewState;
+
+  const {
+    nodePositions,
+    subnetPolygons,
+    subnetLabels,
+    allNodes,
+    subnetConnectionEdges,
+  } = useMemo(() => {
     if (!topology) {
       return {
         nodePositions: new Map<string, [number, number]>(),
@@ -211,7 +307,7 @@ export const NetworkGraph = ({
     }));
 
     const formatSubnetLabel = (id: string): string => {
-      const parts = id.split("_");
+      const parts = id.split('_');
       const name = parts[0];
       return name.charAt(0).toUpperCase() + name.slice(1);
     };
@@ -269,10 +365,10 @@ export const NetworkGraph = ({
 
   const getNodeFillColor = (node: NodeData): RGBColor => {
     const state = nodeStates?.get(node.id);
-    if (state === "root_access") {
+    if (state === 'root_access') {
       return NODE_STATE_COLORS.root_access;
     }
-    if (state === "user_access") {
+    if (state === 'user_access') {
       return NODE_STATE_COLORS.user_access;
     }
     return node.color;
@@ -280,12 +376,27 @@ export const NetworkGraph = ({
 
   const trails: TrailData[] = viewState
     ? [
-        createTrailPath(previousBlueAction?.Host, currentBlueAction?.Host, AGENT_COLORS.blue, nodePositions, viewState.zoom),
-        createTrailPath(previousRedAction?.Host, currentRedAction?.Host, AGENT_COLORS.red, nodePositions, viewState.zoom),
+        createTrailPath(
+          previousBlueAction?.Host,
+          currentBlueAction?.Host,
+          AGENT_COLORS.blue,
+          nodePositions,
+          viewState.zoom
+        ),
+        createTrailPath(
+          previousRedAction?.Host,
+          currentRedAction?.Host,
+          AGENT_COLORS.red,
+          nodePositions,
+          viewState.zoom
+        ),
       ].filter((t): t is TrailData => t !== null)
     : [];
 
-  const worldToScreen = (worldX: number, worldY: number): [number, number] | null => {
+  const worldToScreen = (
+    worldX: number,
+    worldY: number
+  ): [number, number] | null => {
     if (!containerSize || !viewState) return null;
     const scale = Math.pow(2, viewState.zoom);
     const [targetX, targetY] = viewState.target;
@@ -294,7 +405,10 @@ export const NetworkGraph = ({
     return [screenX, screenY];
   };
 
-  const getActionLabelPosition = (action: AgentAction | undefined, pixelOffset: number): { x: number; y: number } | null => {
+  const getActionLabelPosition = (
+    action: AgentAction | undefined,
+    pixelOffset: number
+  ): { x: number; y: number } | null => {
     if (!action?.Host) return null;
     const pos = nodePositions.get(action.Host);
     if (!pos) return null;
@@ -314,7 +428,10 @@ export const NetworkGraph = ({
     return PADDING + ICON_AND_GAP + actionText.length * CHAR_WIDTH;
   };
 
-  const rawBluePos = getActionLabelPosition(currentBlueAction, TOOLTIP_OFFSET_Y);
+  const rawBluePos = getActionLabelPosition(
+    currentBlueAction,
+    TOOLTIP_OFFSET_Y
+  );
   const rawRedPos = getActionLabelPosition(currentRedAction, TOOLTIP_OFFSET_Y);
 
   const computeNudgedPositions = (
@@ -346,8 +463,9 @@ export const NetworkGraph = ({
     const overlapY = box1.bottom > box2.top && box1.top < box2.bottom;
 
     if (overlapX && overlapY) {
-      const overlapAmount = Math.min(box1.right, box2.right) - Math.max(box1.left, box2.left);
-      const nudgeDistance = (overlapAmount / 2) + NUDGE_MARGIN;
+      const overlapAmount =
+        Math.min(box1.right, box2.right) - Math.max(box1.left, box2.left);
+      const nudgeDistance = overlapAmount / 2 + NUDGE_MARGIN;
 
       if (pos1.x <= pos2.x) {
         return [
@@ -365,11 +483,16 @@ export const NetworkGraph = ({
     return [pos1, pos2];
   };
 
-  const [bluePos, redPos] = computeNudgedPositions(rawBluePos, rawRedPos, currentBlueAction, currentRedAction);
+  const [bluePos, redPos] = computeNudgedPositions(
+    rawBluePos,
+    rawRedPos,
+    currentBlueAction,
+    currentRedAction
+  );
 
   const layers = [
     new PolygonLayer({
-      id: "subnet-backgrounds",
+      id: 'subnet-backgrounds',
       data: subnetPolygons,
       getPolygon: (d) => d.polygon,
       getFillColor: (d) => d.color,
@@ -379,35 +502,35 @@ export const NetworkGraph = ({
     }),
 
     new TextLayer({
-      id: "subnet-labels",
+      id: 'subnet-labels',
       data: subnetLabels,
       getPosition: (d) => d.position,
       getText: (d) => d.text,
       getColor: [226, 232, 240],
       getSize: 12,
-      sizeUnits: "pixels",
-      fontWeight: "bold",
+      sizeUnits: 'pixels',
+      fontWeight: 'bold',
       background: true,
       getBackgroundColor: (d) => d.color,
       backgroundPadding: [0, 0],
-      getTextAnchor: "start",
-      getAlignmentBaseline: "bottom",
-      fontFamily: "system-ui, sans-serif",
+      getTextAnchor: 'start',
+      getAlignmentBaseline: 'bottom',
+      fontFamily: 'system-ui, sans-serif',
       fontSettings: { sdf: true, fontSize: 64, radius: 24, buffer: 12 },
     }),
 
     new LineLayer({
-      id: "subnet-connections",
+      id: 'subnet-connections',
       data: subnetConnectionEdges,
       getSourcePosition: (d) => d.sourcePosition,
       getTargetPosition: (d) => d.targetPosition,
       getColor: EDGE_COLORS.firewall,
       getWidth: 3,
-      widthUnits: "pixels",
+      widthUnits: 'pixels',
     }),
 
     new ScatterplotLayer({
-      id: "nodes",
+      id: 'nodes',
       data: allNodes,
       getPosition: (d) => d.position,
       getRadius: (d) => d.radius,
@@ -417,10 +540,10 @@ export const NetworkGraph = ({
         return highlight ?? [0, 0, 0, 0];
       },
       getLineWidth: (d) => (getHighlightColor(d.id) ? 8 : 0),
-      lineWidthUnits: "pixels",
+      lineWidthUnits: 'pixels',
       stroked: true,
       filled: true,
-      radiusUnits: "pixels",
+      radiusUnits: 'pixels',
       antialiasing: true,
       pickable: true,
       updateTriggers: {
@@ -431,79 +554,37 @@ export const NetworkGraph = ({
     }),
 
     new PathLayer<TrailData>({
-      id: "agent-trails",
+      id: 'agent-trails',
       data: trails,
       getPath: (d) => d.path,
       getColor: (d) => d.color,
       getWidth: 3,
-      widthUnits: "pixels",
+      widthUnits: 'pixels',
       capRounded: true,
       jointRounded: true,
       updateTriggers: {
-        getPath: [previousBlueAction?.Host, currentBlueAction?.Host, previousRedAction?.Host, currentRedAction?.Host, viewState?.zoom],
-        getColor: [previousBlueAction?.Host, currentBlueAction?.Host, previousRedAction?.Host, currentRedAction?.Host],
+        getPath: [
+          previousBlueAction?.Host,
+          currentBlueAction?.Host,
+          previousRedAction?.Host,
+          currentRedAction?.Host,
+          viewState?.zoom,
+        ],
+        getColor: [
+          previousBlueAction?.Host,
+          currentBlueAction?.Host,
+          previousRedAction?.Host,
+          currentRedAction?.Host,
+        ],
       },
     }),
   ];
-
-  const ActionLabel = ({ action, position, color }: { action: AgentAction; position: { x: number; y: number }; color: string }) => {
-    const statusIcon = action.Status === "TRUE" ? "✓" : "✗";
-    const statusColor = action.Status === "TRUE" ? "#4ade80" : "#94a3b8";
-    return (
-      <div
-        style={{
-          position: "absolute",
-          left: position.x,
-          top: position.y,
-          transform: "translate(-50%, -50%)",
-          backgroundColor: "rgba(30, 41, 59, 0.95)",
-          border: `1px solid ${color}`,
-          borderRadius: "4px",
-          padding: "4px 8px",
-          fontSize: "12px",
-          fontWeight: 500,
-          whiteSpace: "nowrap",
-          pointerEvents: "none",
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          zIndex: Z_INDEX.ACTION_LABEL,
-        }}
-      >
-        <span style={{ color: statusColor }}>{statusIcon}</span>
-        <span style={{ color: "#e2e8f0" }}>{action.Action}</span>
-      </div>
-    );
-  };
-
-  const HostTooltip = ({ node, x, y }: { node: NodeData; x: number; y: number }) => (
-    <div
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        transform: "translate(10px, 10px)",
-        backgroundColor: "rgba(0, 0, 0, 0.9)",
-        color: "white",
-        padding: "8px 12px",
-        borderRadius: "4px",
-        fontSize: "12px",
-        fontFamily: "monospace",
-        pointerEvents: "none",
-        zIndex: Z_INDEX.HOST_TOOLTIP,
-      }}
-    >
-      <div>{node.id}</div>
-      <div>Type: {node.type}</div>
-      {node.subnet && <div>Subnet: {node.subnet}</div>}
-    </div>
-  );
 
   if (!topology || !viewState) {
     return (
       <div
         ref={containerRef}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: '100%', height: '100%' }}
         className="flex items-center justify-center text-slate-400"
       >
         Loading topology...
@@ -512,13 +593,10 @@ export const NetworkGraph = ({
   }
 
   return (
-    <div
-      ref={containerRef}
-      style={{ width: "100%", height: "100%" }}
-    >
+    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
       {containerSize && (
         <DeckGL
-          views={new OrthographicView({ id: "ortho" })}
+          views={new OrthographicView({ id: 'ortho' })}
           viewState={viewState}
           onViewStateChange={onViewStateChange}
           controller={{
@@ -533,13 +611,25 @@ export const NetworkGraph = ({
         />
       )}
       {currentBlueAction && bluePos && (
-        <ActionLabel action={currentBlueAction} position={bluePos} color="#60a5fa" />
+        <ActionLabel
+          action={currentBlueAction}
+          position={bluePos}
+          color="#60a5fa"
+        />
       )}
       {currentRedAction && redPos && (
-        <ActionLabel action={currentRedAction} position={redPos} color="#f87171" />
+        <ActionLabel
+          action={currentRedAction}
+          position={redPos}
+          color="#f87171"
+        />
       )}
       {hoveredNode && (
-        <HostTooltip node={hoveredNode.node} x={hoveredNode.x} y={hoveredNode.y} />
+        <HostTooltip
+          node={hoveredNode.node}
+          x={hoveredNode.x}
+          y={hoveredNode.y}
+        />
       )}
     </div>
   );

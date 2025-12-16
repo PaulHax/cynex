@@ -1,4 +1,4 @@
-import type { HostType } from "./extractTopology";
+import type { HostType } from './extractTopology';
 
 export type RGBAColor = [number, number, number, number];
 export type RGBColor = [number, number, number];
@@ -42,9 +42,9 @@ export const EDGE_COLORS = {
 } as const;
 
 export const UI_COLORS = {
-  background: "#0f172a",
-  surface: "#1e293b",
-  text: "#f1f5f9",
-  textMuted: "#94a3b8",
-  border: "#334155",
+  background: '#0f172a',
+  surface: '#1e293b',
+  text: '#f1f5f9',
+  textMuted: '#94a3b8',
+  border: '#334155',
 } as const;

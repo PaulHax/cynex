@@ -1,12 +1,22 @@
-import { useState, useEffect, useCallback, useMemo, type DragEvent } from "react";
-import { NetworkGraph } from "./view/NetworkGraph";
-import { ActionPanel } from "./view/ActionPanel";
-import { StepControls } from "./view/StepControls";
-import { TrajectorySelector } from "./view/TrajectorySelector";
-import { loadTrajectoryManifest, loadTrajectory, parseTrajectoryFile } from "./trajectory/loader";
-import { computeNodeStates } from "./trajectory/nodeState";
-import { useNetworkTopology } from "./network/useNetworkTopology";
-import type { TrajectoryFile } from "./trajectory/types";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  type DragEvent,
+} from 'react';
+import { NetworkGraph } from './view/NetworkGraph';
+import { ActionPanel } from './view/ActionPanel';
+import { StepControls } from './view/StepControls';
+import { TrajectorySelector } from './view/TrajectorySelector';
+import {
+  loadTrajectoryManifest,
+  loadTrajectory,
+  parseTrajectoryFile,
+} from './trajectory/loader';
+import { computeNodeStates } from './trajectory/nodeState';
+import { useNetworkTopology } from './network/useNetworkTopology';
+import type { TrajectoryFile } from './trajectory/types';
 
 const App = () => {
   const [trajectory, setTrajectory] = useState<TrajectoryFile | null>(null);
@@ -59,17 +69,20 @@ const App = () => {
     setIsPlaying((prev) => !prev);
   }, [currentStep, totalSteps]);
 
-  const handleTrajectoryLoad = useCallback((data: TrajectoryFile, name: string) => {
-    setTrajectory(data);
-    setTrajectoryName(name);
-    setCurrentStep(0);
-    setDropError(null);
-    setIsPlaying(false);
-  }, []);
+  const handleTrajectoryLoad = useCallback(
+    (data: TrajectoryFile, name: string) => {
+      setTrajectory(data);
+      setTrajectoryName(name);
+      setCurrentStep(0);
+      setDropError(null);
+      setIsPlaying(false);
+    },
+    []
+  );
 
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
-    if (e.dataTransfer.types.includes("Files")) {
+    if (e.dataTransfer.types.includes('Files')) {
       setIsDragging(true);
     }
   }, []);
@@ -79,25 +92,30 @@ const App = () => {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback(async (e: DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (!file?.name.endsWith(".json")) {
-      setDropError("Please drop a JSON file");
-      return;
-    }
-    setDropLoading(true);
-    setDropError(null);
-    try {
-      const data = await parseTrajectoryFile(file);
-      handleTrajectoryLoad(data, file.name);
-    } catch (err) {
-      setDropError(err instanceof Error ? err.message : "Invalid trajectory file");
-    } finally {
-      setDropLoading(false);
-    }
-  }, [handleTrajectoryLoad]);
+  const handleDrop = useCallback(
+    async (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (!file?.name.endsWith('.json')) {
+        setDropError('Please drop a JSON file');
+        return;
+      }
+      setDropLoading(true);
+      setDropError(null);
+      try {
+        const data = await parseTrajectoryFile(file);
+        handleTrajectoryLoad(data, file.name);
+      } catch (err) {
+        setDropError(
+          err instanceof Error ? err.message : 'Invalid trajectory file'
+        );
+      } finally {
+        setDropLoading(false);
+      }
+    },
+    [handleTrajectoryLoad]
+  );
 
   const nodeStates = useMemo(() => {
     if (!trajectory) return undefined;
@@ -133,13 +151,17 @@ const App = () => {
         </div>
       )}
 
-      <div className={`relative flex-shrink-0 w-[420px] flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? '-ml-[420px]' : ''}`}>
+      <div
+        className={`relative flex-shrink-0 w-[420px] flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? '-ml-[420px]' : ''}`}
+      >
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           className={`absolute top-4 z-10 bg-slate-900 hover:bg-slate-800 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-all shadow-lg ${
-            sidebarCollapsed ? 'left-[calc(100%+0.5rem)] right-auto' : '-right-4'
+            sidebarCollapsed
+              ? 'left-[calc(100%+0.5rem)] right-auto'
+              : '-right-4'
           }`}
-          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg
             className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
@@ -147,7 +169,12 @@ const App = () => {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
 
@@ -163,8 +190,9 @@ const App = () => {
             </div>
             {trajectory && (
               <p className="text-slate-400 text-sm mt-1">
-                {trajectory.blue_agent_name} vs {trajectory.red_agent_name} — Episode{" "}
-                {trajectory.episode} — {Object.keys(trajectory.network_topology).length} hosts
+                {trajectory.blue_agent_name} vs {trajectory.red_agent_name} —
+                Episode {trajectory.episode} —{' '}
+                {Object.keys(trajectory.network_topology).length} hosts
               </p>
             )}
           </div>
@@ -173,7 +201,9 @@ const App = () => {
         {!trajectory ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
-              <p className="text-slate-400">Load a trajectory file to get started</p>
+              <p className="text-slate-400">
+                Load a trajectory file to get started
+              </p>
             </div>
           </div>
         ) : (
@@ -207,8 +237,16 @@ const App = () => {
           <NetworkGraph
             currentBlueAction={trajectory.blue_actions[currentStep]}
             currentRedAction={trajectory.red_actions[currentStep]}
-            previousBlueAction={currentStep > 0 ? trajectory.blue_actions[currentStep - 1] : undefined}
-            previousRedAction={currentStep > 0 ? trajectory.red_actions[currentStep - 1] : undefined}
+            previousBlueAction={
+              currentStep > 0
+                ? trajectory.blue_actions[currentStep - 1]
+                : undefined
+            }
+            previousRedAction={
+              currentStep > 0
+                ? trajectory.red_actions[currentStep - 1]
+                : undefined
+            }
             nodeStates={nodeStates}
             topology={topology}
           />

@@ -1,6 +1,6 @@
 export type AgentAction = {
   Action: string;
-  Status: "TRUE" | "FALSE";
+  Status: 'TRUE' | 'FALSE';
   Host: string;
 };
 
@@ -18,8 +18,8 @@ export type Subnet = {
 };
 
 export type NetworkInterface = {
-  "Interface Name": string;
-  "IP Address": string;
+  'Interface Name': string;
+  'IP Address': string;
   Subnet: Subnet;
 };
 
@@ -49,7 +49,7 @@ export type UserInfo = {
 
 export type SystemInfo = {
   Hostname: string;
-  OSType: "LINUX" | "WINDOWS";
+  OSType: 'LINUX' | 'WINDOWS';
   OSDistribution: string;
   OSVersion: string;
   Architecture: string;
@@ -59,8 +59,8 @@ export type HostInfo = {
   Interface: NetworkInterface[];
   Sessions: Session[];
   Processes: Process[];
-  "User Info": UserInfo[];
-  "System info": SystemInfo;
+  'User Info': UserInfo[];
+  'System info': SystemInfo;
 };
 
 export type TrajectoryFile = {

@@ -1,6 +1,10 @@
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
-import { loadTrajectoryManifest, loadTrajectory, parseTrajectoryFile } from "../trajectory/loader";
-import type { TrajectoryFile } from "../trajectory/types";
+import { useState, useEffect, useRef, type ChangeEvent } from 'react';
+import {
+  loadTrajectoryManifest,
+  loadTrajectory,
+  parseTrajectoryFile,
+} from '../trajectory/loader';
+import type { TrajectoryFile } from '../trajectory/types';
 
 type TrajectorySelectorProps = {
   onTrajectoryLoad: (trajectory: TrajectoryFile, name: string) => void;
@@ -9,7 +13,12 @@ type TrajectorySelectorProps = {
   error?: string | null;
 };
 
-export const TrajectorySelector = ({ onTrajectoryLoad, currentName, loading: externalLoading, error: externalError }: TrajectorySelectorProps) => {
+export const TrajectorySelector = ({
+  onTrajectoryLoad,
+  currentName,
+  loading: externalLoading,
+  error: externalError,
+}: TrajectorySelectorProps) => {
   const [availableFiles, setAvailableFiles] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +28,7 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName, loading: ext
   const displayError = error || externalError;
 
   useEffect(() => {
-    loadTrajectoryManifest().then(m => setAvailableFiles(m.files));
+    loadTrajectoryManifest().then((m) => setAvailableFiles(m.files));
   }, []);
 
   const handleSelect = async (filename: string) => {
@@ -30,7 +39,7 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName, loading: ext
       const trajectory = await loadTrajectory(`/data/trajectories/${filename}`);
       onTrajectoryLoad(trajectory, filename);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load trajectory");
+      setError(e instanceof Error ? e.message : 'Failed to load trajectory');
     } finally {
       setLoading(false);
     }
@@ -45,11 +54,11 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName, loading: ext
       const trajectory = await parseTrajectoryFile(file);
       onTrajectoryLoad(trajectory, file.name);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid trajectory file");
+      setError(e instanceof Error ? e.message : 'Invalid trajectory file');
     } finally {
       setLoading(false);
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const hasAvailableFiles = availableFiles.length > 0;
@@ -59,13 +68,19 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName, loading: ext
       {hasAvailableFiles && (
         <select
           className="bg-slate-700 text-slate-200 px-2 py-1 rounded border border-slate-600 text-sm"
-          value={currentName && availableFiles.includes(currentName) ? currentName : ""}
-          onChange={e => handleSelect(e.target.value)}
+          value={
+            currentName && availableFiles.includes(currentName)
+              ? currentName
+              : ''
+          }
+          onChange={(e) => handleSelect(e.target.value)}
           disabled={isLoading}
         >
           <option value="">Select...</option>
-          {availableFiles.map(f => (
-            <option key={f} value={f}>{f.replace(".json", "")}</option>
+          {availableFiles.map((f) => (
+            <option key={f} value={f}>
+              {f.replace('.json', '')}
+            </option>
           ))}
         </select>
       )}
@@ -88,7 +103,9 @@ export const TrajectorySelector = ({ onTrajectoryLoad, currentName, loading: ext
       <span className="text-slate-500 text-xs">or drag 'n drop</span>
 
       {isLoading && <span className="text-slate-400 text-sm">Loading...</span>}
-      {displayError && <span className="text-red-400 text-sm">{displayError}</span>}
+      {displayError && (
+        <span className="text-red-400 text-sm">{displayError}</span>
+      )}
     </div>
   );
 };
