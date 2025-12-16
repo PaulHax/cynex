@@ -9,6 +9,7 @@ import { NetworkGraph } from './view/NetworkGraph';
 import { ActionPanel } from './view/ActionPanel';
 import { StepControls } from './view/StepControls';
 import { TrajectorySelector } from './view/TrajectorySelector';
+import type { StepRange } from './view/RangeSlider';
 import {
   loadTrajectoryManifest,
   loadTrajectory,
@@ -21,7 +22,7 @@ import type { TrajectoryFile } from './trajectory/types';
 const App = () => {
   const [trajectory, setTrajectory] = useState<TrajectoryFile | null>(null);
   const [trajectoryName, setTrajectoryName] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [stepRange, setStepRange] = useState<StepRange>({ start: 0, end: 0 });
   const [initialLoading, setInitialLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
@@ -51,13 +52,13 @@ const App = () => {
     if (!isPlaying || totalSteps === 0) return;
 
     const interval = setInterval(() => {
-      setCurrentStep((prev) => {
-        const next = prev + 1;
-        if (next >= totalSteps) {
+      setStepRange((prev) => {
+        const nextEnd = prev.end + 1;
+        if (nextEnd >= totalSteps) {
           setIsPlaying(false);
           return prev;
         }
-        return next;
+        return { ...prev, end: nextEnd };
       });
     }, 1000);
 
@@ -65,15 +66,15 @@ const App = () => {
   }, [isPlaying, totalSteps]);
 
   const handlePlayToggle = useCallback(() => {
-    if (currentStep >= totalSteps - 1) return;
+    if (stepRange.end >= totalSteps - 1) return;
     setIsPlaying((prev) => !prev);
-  }, [currentStep, totalSteps]);
+  }, [stepRange.end, totalSteps]);
 
   const handleTrajectoryLoad = useCallback(
     (data: TrajectoryFile, name: string) => {
       setTrajectory(data);
       setTrajectoryName(name);
-      setCurrentStep(0);
+      setStepRange({ start: 0, end: 0 });
       setDropError(null);
       setIsPlaying(false);
     },
@@ -122,9 +123,9 @@ const App = () => {
     return computeNodeStates(
       trajectory.blue_actions,
       trajectory.red_actions,
-      currentStep
+      stepRange.end
     );
-  }, [trajectory, currentStep]);
+  }, [trajectory, stepRange.end]);
 
   const topology = useNetworkTopology(trajectory);
 
@@ -210,20 +211,20 @@ const App = () => {
           <>
             <div className="flex-1 min-h-0">
               <ActionPanel
-                currentStep={currentStep}
+                stepRange={stepRange}
                 totalSteps={trajectory.blue_actions.length}
                 blueActions={trajectory.blue_actions}
                 redActions={trajectory.red_actions}
-                score={trajectory.metric_scores[currentStep]}
-                onStepChange={setCurrentStep}
+                score={trajectory.metric_scores[stepRange.end]}
+                onStepRangeChange={setStepRange}
               />
             </div>
 
             <div className="flex-shrink-0">
               <StepControls
-                currentStep={currentStep}
+                stepRange={stepRange}
                 totalSteps={trajectory.blue_actions.length}
-                onStepChange={setCurrentStep}
+                onStepRangeChange={setStepRange}
                 isPlaying={isPlaying}
                 onPlayToggle={handlePlayToggle}
               />
@@ -235,18 +236,9 @@ const App = () => {
       <div className="flex-1 relative bg-slate-950">
         {trajectory && (
           <NetworkGraph
-            currentBlueAction={trajectory.blue_actions[currentStep]}
-            currentRedAction={trajectory.red_actions[currentStep]}
-            previousBlueAction={
-              currentStep > 0
-                ? trajectory.blue_actions[currentStep - 1]
-                : undefined
-            }
-            previousRedAction={
-              currentStep > 0
-                ? trajectory.red_actions[currentStep - 1]
-                : undefined
-            }
+            blueActions={trajectory.blue_actions}
+            redActions={trajectory.red_actions}
+            stepRange={stepRange}
             nodeStates={nodeStates}
             topology={topology}
           />

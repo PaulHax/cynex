@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { AgentAction } from '../trajectory/types';
+import type { StepRange } from './RangeSlider';
 
 type ActionHistoryProps = {
   blueActions: AgentAction[];
   redActions: AgentAction[];
-  currentStep: number;
-  onStepChange: (step: number) => void;
+  stepRange: StepRange;
+  onStepRangeChange: (range: StepRange) => void;
 };
 
 const StatusIndicator = ({ status }: { status: 'TRUE' | 'FALSE' }) => (
@@ -31,8 +32,8 @@ const ActionCell = ({ action }: { action: AgentAction }) => (
 export const ActionHistory = ({
   blueActions,
   redActions,
-  currentStep,
-  onStepChange,
+  stepRange,
+  onStepRangeChange,
 }: ActionHistoryProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentRowRef = useRef<HTMLDivElement>(null);
@@ -42,9 +43,30 @@ export const ActionHistory = ({
       behavior: 'smooth',
       block: 'nearest',
     });
-  }, [currentStep]);
+  }, [stepRange.end]);
+
+  const handleStepClick = (step: number) => {
+    if (step < stepRange.start) {
+      onStepRangeChange({ start: step, end: step });
+    } else {
+      onStepRangeChange({ ...stepRange, end: step });
+    }
+  };
 
   const allSteps = Array.from({ length: blueActions.length }, (_, i) => i);
+
+  const getRowClass = (step: number): string => {
+    const isInRange = step >= stepRange.start && step <= stepRange.end;
+    const isEnd = step === stepRange.end;
+
+    if (isEnd) {
+      return 'bg-slate-600/80 border-l-2 border-blue-400';
+    }
+    if (isInRange) {
+      return 'bg-slate-700/60 border-l-2 border-slate-500';
+    }
+    return 'opacity-70 hover:opacity-100 hover:bg-slate-700/50';
+  };
 
   return (
     <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
@@ -63,13 +85,9 @@ export const ActionHistory = ({
         {allSteps.map((step) => (
           <div
             key={step}
-            ref={step === currentStep ? currentRowRef : undefined}
-            onClick={() => onStepChange(step)}
-            className={`flex gap-2 py-1.5 px-2 rounded text-xs cursor-pointer ${
-              step === currentStep
-                ? 'bg-slate-600/80 border-l-2 border-slate-400'
-                : 'opacity-70 hover:opacity-100 hover:bg-slate-700/50'
-            }`}
+            ref={step === stepRange.end ? currentRowRef : undefined}
+            onClick={() => handleStepClick(step)}
+            className={`flex gap-2 py-1.5 px-2 rounded text-xs cursor-pointer ${getRowClass(step)}`}
           >
             <div className="text-slate-500 w-5 shrink-0">{step + 1}</div>
             <ActionCell action={blueActions[step]} />

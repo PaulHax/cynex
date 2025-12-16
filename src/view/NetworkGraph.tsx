@@ -19,12 +19,16 @@ import {
 } from '../network/colors';
 import type { AgentAction } from '../trajectory/types';
 import type { NodeState } from '../trajectory/nodeState';
+import type { StepRange } from './RangeSlider';
+import {
+  getMovementsInRange,
+  type Movement,
+} from '../trajectory/computeTrails';
 
 type NetworkGraphProps = {
-  currentBlueAction?: AgentAction;
-  currentRedAction?: AgentAction;
-  previousBlueAction?: AgentAction;
-  previousRedAction?: AgentAction;
+  blueActions: AgentAction[];
+  redActions: AgentAction[];
+  stepRange: StepRange;
   nodeStates?: Map<string, NodeState>;
   topology: LayoutResult | null;
 };
@@ -60,17 +64,15 @@ const getNodeRadius = (type: string): number => {
 };
 
 const createTrailPath = (
-  fromHost: string | undefined,
-  toHost: string | undefined,
-  agentColor: RGBColor,
+  movement: Movement,
   nodePositions: Map<string, [number, number]>,
   zoom: number
 ): TrailData | null => {
-  if (!fromHost || !toHost || fromHost === toHost) return null;
-
-  const fromPos = nodePositions.get(fromHost);
-  const toPos = nodePositions.get(toHost);
+  const fromPos = nodePositions.get(movement.fromHost);
+  const toPos = nodePositions.get(movement.toHost);
   if (!fromPos || !toPos) return null;
+
+  const agentColor = AGENT_COLORS[movement.agent];
 
   const dx = toPos[0] - fromPos[0];
   const dy = toPos[1] - fromPos[1];
@@ -178,10 +180,9 @@ const HostTooltip = ({
 );
 
 export const NetworkGraph = ({
-  currentBlueAction,
-  currentRedAction,
-  previousBlueAction,
-  previousRedAction,
+  blueActions,
+  redActions,
+  stepRange,
   nodeStates,
   topology,
 }: NetworkGraphProps) => {
@@ -199,6 +200,9 @@ export const NetworkGraph = ({
     x: number;
     y: number;
   } | null>(null);
+
+  const currentBlueAction = blueActions[stepRange.end];
+  const currentRedAction = redActions[stepRange.end];
 
   const onHover = useCallback((info: PickingInfo<NodeData>) => {
     if (info.object && info.x !== undefined && info.y !== undefined) {
@@ -374,24 +378,17 @@ export const NetworkGraph = ({
     return node.color;
   };
 
-  const trails: TrailData[] = viewState
-    ? [
-        createTrailPath(
-          previousBlueAction?.Host,
-          currentBlueAction?.Host,
-          AGENT_COLORS.blue,
-          nodePositions,
-          viewState.zoom
-        ),
-        createTrailPath(
-          previousRedAction?.Host,
-          currentRedAction?.Host,
-          AGENT_COLORS.red,
-          nodePositions,
-          viewState.zoom
-        ),
-      ].filter((t): t is TrailData => t !== null)
-    : [];
+  const movements = useMemo(
+    () => getMovementsInRange(blueActions, redActions, stepRange),
+    [blueActions, redActions, stepRange]
+  );
+
+  const trails: TrailData[] = useMemo(() => {
+    if (!viewState) return [];
+    return movements
+      .map((m) => createTrailPath(m, nodePositions, viewState.zoom))
+      .filter((t): t is TrailData => t !== null);
+  }, [movements, nodePositions, viewState]);
 
   const worldToScreen = (
     worldX: number,
@@ -563,19 +560,8 @@ export const NetworkGraph = ({
       capRounded: true,
       jointRounded: true,
       updateTriggers: {
-        getPath: [
-          previousBlueAction?.Host,
-          currentBlueAction?.Host,
-          previousRedAction?.Host,
-          currentRedAction?.Host,
-          viewState?.zoom,
-        ],
-        getColor: [
-          previousBlueAction?.Host,
-          currentBlueAction?.Host,
-          previousRedAction?.Host,
-          currentRedAction?.Host,
-        ],
+        getPath: [stepRange, viewState?.zoom],
+        getColor: [stepRange],
       },
     }),
   ];
