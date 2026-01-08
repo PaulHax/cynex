@@ -2,10 +2,13 @@ import type { TrajectoryFile, HostInfo } from '../trajectory/types';
 
 export type HostType = 'workstation' | 'server' | 'defender';
 
+export type HostRole = 'database' | 'auth' | 'front';
+
 export type HostDefinition = {
   id: string;
   subnet: string;
   type: HostType;
+  role?: HostRole;
   x: number;
   y: number;
 };
@@ -30,6 +33,13 @@ export type ExtractedTopology = {
 };
 
 const SERVER_PATTERNS = ['Server', 'Database', 'Auth', 'Front', 'Enterprise'];
+
+const inferHostRole = (hostname: string): HostRole | undefined => {
+  if (hostname.includes('Database')) return 'database';
+  if (hostname.includes('Auth')) return 'auth';
+  if (hostname.includes('Front')) return 'front';
+  return undefined;
+};
 
 const inferHostType = (hostname: string): HostType => {
   if (hostname === 'Defender') return 'defender';
@@ -110,10 +120,12 @@ export const extractTopology = (
     (hostname) => {
       const subnetAddr = hostSubnetMap.get(hostname);
       const subnet = subnets.find((s) => s.networkAddress === subnetAddr);
+      const type = inferHostType(hostname);
       return {
         id: hostname,
         subnet: subnet?.id ?? 'unknown',
-        type: inferHostType(hostname),
+        type,
+        role: type === 'server' ? inferHostRole(hostname) : undefined,
         x: 0,
         y: 0,
       };

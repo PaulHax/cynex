@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="32" viewBox="0 0 192 32">
+  <!-- Host icon atlas: 6 icons, each 32x32. Single-color white so deck.gl IconLayer can tint via mask. -->
+
+  <!-- Icon 0: database (stacked disks) at x=0..31 -->
+  <g
+    transform="translate(0 0)"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <!-- top disk -->
+    <ellipse cx="16" cy="8" rx="10" ry="4" />
+    <!-- vertical sides -->
+    <path d="M6 8 V24" />
+    <path d="M26 8 V24" />
+    <!-- middle separator (two-disk look) -->
+    <ellipse cx="16" cy="16" rx="10" ry="4" />
+    <!-- bottom disk -->
+    <ellipse cx="16" cy="24" rx="10" ry="4" />
+  </g>
+
+  <!-- Icon 1: auth (shield) at x=32..63 -->
+  <g
+    transform="translate(32 0)"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M16 5 L24 8 V15 C24 21 20 25 16 27 C12 25 8 21 8 15 V8 Z" />
+    <!-- simple keyhole/check mark for security emphasis -->
+    <path d="M12.5 16 L15 18.5 L20 13.5" />
+  </g>
+
+  <!-- Icon 2: front (door) at x=64..95 -->
+  <g
+    transform="translate(64 0)"
+    fill="#ffffff"
+  >
+    <!-- Provided icon: plans/opened-door-aperture.svg (scaled into this 32x32 tile) -->
+    <g transform="translate(8 5) scale(0.051) translate(-99.704 0)">
+      <path
+        d="M184.646,0v21.72H99.704v433.358h31.403V53.123h53.539V492.5l208.15-37.422v-61.235V37.5L184.646,0z M222.938,263.129 c-6.997,0-12.67-7.381-12.67-16.486c0-9.104,5.673-16.485,12.67-16.485s12.67,7.381,12.67,16.485 C235.608,255.748,229.935,263.129,222.938,263.129z"
+      />
+    </g>
+  </g>
+
+  <!-- Icon 3: server tower at x=96..127 -->
+  <g
+    transform="translate(96 0)"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M10 6 H22 C23.1 6 24 6.9 24 8 V24 C24 25.1 23.1 26 22 26 H10 C8.9 26 8 25.1 8 24 V8 C8 6.9 8.9 6 10 6 Z" />
+    <path d="M11 11 H21" />
+    <path d="M11 15 H21" />
+    <path d="M11 19 H21" />
+    <circle cx="12" cy="23" r="1" />
+    <circle cx="16" cy="23" r="1" />
+  </g>
+
+  <!-- Icon 4: workstation / laptop at x=128..159 -->
+  <g transform="translate(128 0)" fill="#ffffff">
+    <path d="M10 8 H22 C23.1 8 24 8.9 24 10 V19 C24 20.1 23.1 21 22 21 H10 C8.9 21 8 20.1 8 19 V10 C8 8.9 8.9 8 10 8 Z" />
+    <path d="M6 23 H26 V25 H6 Z" />
+  </g>
+
+  <!-- Icon 5: defender (6-point sheriff badge silhouette) at x=160..191 -->
+  <g
+    transform="translate(160 0)"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path
+      d="M16 5
+         L19.04 9.69
+         L24.6 9.14
+         L22.82 14.44
+         L26.72 18.45
+         L21.47 20.36
+         L20.77 25.91
+         L16 23
+         L11.23 25.91
+         L10.53 20.36
+         L5.28 18.45
+         L9.18 14.44
+         L7.4 9.14
+         L12.96 9.69
+         Z"
+    />
+  </g>
+</svg>
