@@ -7,6 +7,7 @@ import {
   PolygonLayer,
   PathLayer,
   TextLayer,
+  IconLayer,
 } from '@deck.gl/layers';
 import type { LayoutResult, SubnetBounds } from '../network/computeLayout';
 import {
@@ -26,6 +27,9 @@ import {
   type Movement,
 } from '../trajectory/computeTrails';
 
+import hostIconAtlas from '../assets/host-role-atlas.svg';
+import type { HostRole } from '../network/extractTopology';
+
 type NetworkGraphProps = {
   blueActions: AgentAction[];
   redActions: AgentAction[];
@@ -43,10 +47,17 @@ type TrailData = {
 type NodeData = {
   id: string;
   type: string;
+  role?: HostRole;
   subnet?: string;
   position: [number, number];
   radius: number;
   color: RGBColor;
+};
+
+type RoleNodeData = NodeData & { role: HostRole };
+type TypeIconNodeData = NodeData & {
+  type: 'server' | 'workstation' | 'defender';
+  role?: undefined;
 };
 
 const Z_INDEX = {
@@ -64,6 +75,95 @@ const getNodeRadius = (type: string): number => {
       return 14;
   }
 };
+
+const HOST_ICON_SIZE = 44;
+
+type HostIconKey = HostRole | 'server' | 'workstation' | 'defender';
+
+const HOST_ICON_MAPPING: Record<
+  HostIconKey,
+  {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    anchorX: number;
+    anchorY: number;
+    mask: boolean;
+  }
+> = {
+  database: {
+    x: 0,
+    y: 0,
+    width: 32,
+    height: 32,
+    anchorX: 16,
+    anchorY: 16,
+    mask: true,
+  },
+  auth: {
+    x: 32,
+    y: 0,
+    width: 32,
+    height: 32,
+    anchorX: 16,
+    anchorY: 16,
+    mask: true,
+  },
+  // The gate glyph is visually bottom-heavy; tweak anchorY to center it.
+  front: {
+    x: 64,
+    y: 0,
+    width: 32,
+    height: 32,
+    anchorX: 16,
+    anchorY: 18,
+    mask: true,
+  },
+
+  server: {
+    x: 96,
+    y: 0,
+    width: 32,
+    height: 32,
+    anchorX: 16,
+    anchorY: 16,
+    mask: true,
+  },
+  workstation: {
+    x: 128,
+    y: 0,
+    width: 32,
+    height: 32,
+    anchorX: 16,
+    anchorY: 16,
+    mask: true,
+  },
+  defender: {
+    x: 160,
+    y: 0,
+    width: 32,
+    height: 32,
+    anchorX: 16,
+    anchorY: 16,
+    mask: true,
+  },
+};
+
+const hasHostRole = (node: NodeData): node is RoleNodeData =>
+  node.role !== undefined;
+
+const hasHostTypeIcon = (node: NodeData): node is TypeIconNodeData =>
+  node.role === undefined &&
+  (node.type === 'server' ||
+    node.type === 'workstation' ||
+    node.type === 'defender');
+
+const hasHostIcon = (node: NodeData): node is RoleNodeData | TypeIconNodeData =>
+  hasHostRole(node) || hasHostTypeIcon(node);
+
+const getHostIconKey = (node: RoleNodeData | TypeIconNodeData): HostIconKey =>
+  hasHostRole(node) ? node.role : node.type;
 
 const AGED_COLORS: Record<'blue' | 'red', RGBColor> = {
   blue: [115, 140, 170], // muted blue
@@ -181,6 +281,7 @@ const HostTooltip = ({
   y: number;
 }) => (
   <div
+    data-testid="host-tooltip"
     style={{
       position: 'absolute',
       left: x,
@@ -198,6 +299,7 @@ const HostTooltip = ({
   >
     <div>{node.id}</div>
     <div>Type: {node.type}</div>
+    {node.role && <div>Role: {node.role}</div>}
     {node.subnet && <div>Subnet: {node.subnet}</div>}
   </div>
 );
@@ -351,7 +453,11 @@ export const NetworkGraph = ({
       ...host,
       position: [host.x, host.y] as [number, number],
       radius: getNodeRadius(host.type),
-      color: HOST_TYPE_COLORS[host.type] as RGBColor,
+      color: (host.type === 'defender'
+        ? AGENT_COLORS.blue
+        : host.type === 'workstation'
+          ? HOST_TYPE_COLORS.server
+          : HOST_TYPE_COLORS[host.type]) as RGBColor,
     }));
 
     const connectionEdges = topology.subnetEdges.map((edge) => {
@@ -395,13 +501,17 @@ export const NetworkGraph = ({
 
   const getNodeFillColor = (node: NodeData): RGBColor => {
     const state = nodeStates?.get(node.id);
-    if (state === 'root_access') {
-      return NODE_STATE_COLORS.root_access;
-    }
-    if (state === 'user_access') {
-      return NODE_STATE_COLORS.user_access;
-    }
+    // Match previous behavior: only override color for compromised states.
+    // Clean/unknown uses the base host-type color.
+    if (state && state !== 'clean') return NODE_STATE_COLORS[state];
     return node.color;
+  };
+
+  const getNodeFillColorRGBA = (
+    node: NodeData
+  ): [number, number, number, number] => {
+    const [r, g, b] = getNodeFillColor(node);
+    return [r, g, b, 255];
   };
 
   const movements = useMemo(
@@ -562,7 +672,7 @@ export const NetworkGraph = ({
 
     new ScatterplotLayer({
       id: 'nodes',
-      data: allNodes,
+      data: allNodes.filter((n) => !hasHostIcon(n)),
       getPosition: (d) => d.position,
       getRadius: (d) => d.radius,
       getFillColor: getNodeFillColor,
@@ -592,6 +702,38 @@ export const NetworkGraph = ({
       },
     }),
 
+    // Highlight ring for icon-rendered hosts (no fill), so action-target highlighting still works.
+    new ScatterplotLayer({
+      id: 'icon-node-highlights',
+      data: allNodes.filter(hasHostIcon),
+      getPosition: (d) => d.position,
+      getRadius: () => HOST_ICON_SIZE / 2 + 4,
+      getFillColor: [0, 0, 0, 0],
+      getLineColor: (d) => {
+        const highlight = getHighlightColor(d.id);
+        return highlight ?? [0, 0, 0, 0];
+      },
+      getLineWidth: (d) => (getHighlightColor(d.id) ? 8 : 0),
+      lineWidthUnits: 'pixels',
+      stroked: true,
+      filled: false,
+      radiusUnits: 'pixels',
+      antialiasing: true,
+      pickable: false,
+      updateTriggers: {
+        getLineColor: [
+          currentBlueAction?.Host,
+          currentRedAction?.Host,
+          agentVisibility,
+        ],
+        getLineWidth: [
+          currentBlueAction?.Host,
+          currentRedAction?.Host,
+          agentVisibility,
+        ],
+      },
+    }),
+
     new PathLayer<TrailData>({
       id: 'agent-trails',
       data: trails,
@@ -604,6 +746,24 @@ export const NetworkGraph = ({
       updateTriggers: {
         getPath: [stepRange, viewState?.zoom],
         getColor: [stepRange],
+      },
+    }),
+
+    new IconLayer<RoleNodeData | TypeIconNodeData>({
+      id: 'host-icons',
+      data: allNodes.filter(hasHostIcon),
+      iconAtlas: hostIconAtlas,
+      iconMapping: HOST_ICON_MAPPING,
+      getIcon: getHostIconKey,
+      getPosition: (d) => d.position,
+      getSize: HOST_ICON_SIZE,
+      sizeUnits: 'pixels',
+      getColor: getNodeFillColorRGBA,
+      billboard: true,
+      pickable: true,
+      updateTriggers: {
+        getIcon: [topology],
+        getColor: [nodeStates],
       },
     }),
   ];
