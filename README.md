@@ -2,7 +2,8 @@
 
 A cybersecurity simulation visualizer for analyzing red team vs. blue team scenarios on network topologies.
 
-<img width="1878" height="1178" alt="image" src="https://github.com/user-attachments/assets/a224681c-76fc-425d-ba75-c1e23f99bb39" />
+<img width="1590" height="1098" alt="image" src="https://github.com/user-attachments/assets/b296eb01-0cef-4277-9291-aa16bc083bcb" />
+
 
 ## Features
 
