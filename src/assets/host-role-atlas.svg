@@ -35,16 +35,20 @@
     <path d="M12.5 16 L15 18.5 L20 13.5" />
   </g>
 
-  <!-- Icon 2: front (door) at x=64..95 -->
+  <!-- Icon 2: front (globe grid) at x=64..95 -->
   <g
     transform="translate(64 0)"
-    fill="#ffffff"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
   >
-    <!-- Provided icon: plans/opened-door-aperture.svg (scaled into this 32x32 tile) -->
-    <g transform="translate(8 5) scale(0.051) translate(-99.704 0)">
-      <path
-        d="M184.646,0v21.72H99.704v433.358h31.403V53.123h53.539V492.5l208.15-37.422v-61.235V37.5L184.646,0z M222.938,263.129 c-6.997,0-12.67-7.381-12.67-16.486c0-9.104,5.673-16.485,12.67-16.485s12.67,7.381,12.67,16.485 C235.608,255.748,229.935,263.129,222.938,263.129z"
-      />
+    <g transform="translate(4 4)">
+      <!-- latitude lines and outer circle -->
+      <path d="M20.5 9.035a9.004 9.004 0 0 0-17 0m17 0c.324.928.5 1.926.5 2.965a8.988 8.988 0 0 1-.5 2.966m0-5.931h-17m0 0A8.987 8.987 0 0 0 3 12a8.99 8.99 0 0 0 .5 2.966m0 0a9.004 9.004 0 0 0 17 0m-17 0h17" />
+      <!-- longitude curve -->
+      <path d="M12 21c4.97-4.97 4.97-13.03 0-18-4.97 4.97-4.97 13.03 0 18z" />
     </g>
   </g>
 
@@ -71,31 +75,10 @@
     <path d="M6 23 H26 V25 H6 Z" />
   </g>
 
-  <!-- Icon 5: defender (6-point sheriff badge silhouette) at x=160..191 -->
-  <g
-    transform="translate(160 0)"
-    fill="none"
-    stroke="#ffffff"
-    stroke-width="2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <path
-      d="M16 5
-         L19.04 9.69
-         L24.6 9.14
-         L22.82 14.44
-         L26.72 18.45
-         L21.47 20.36
-         L20.77 25.91
-         L16 23
-         L11.23 25.91
-         L10.53 20.36
-         L5.28 18.45
-         L9.18 14.44
-         L7.4 9.14
-         L12.96 9.69
-         Z"
-    />
+  <!-- Icon 5: defender (chess rook) at x=160..191 -->
+  <g transform="translate(160 0)">
+    <g transform="scale(0.0625)" fill="#ffffff">
+      <path d="M406 484.7H106v-60h300v60zm-56.67-330.83h-50.05V91.3h-82.39v62.57h-54.22V91.3h-54.23v113.67h295.12V91.3h-54.23v62.57zm23.35 67.23H139.32v187.6h233.36V221.1z" />
+    </g>
   </g>
 </svg>
