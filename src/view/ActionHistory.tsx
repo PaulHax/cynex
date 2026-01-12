@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo, useCallback } from 'react';
 import type { AgentAction } from '../trajectory/types';
 import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
@@ -45,13 +45,13 @@ const EyeIcon = ({ visible }: { visible: boolean }) => (
   </svg>
 );
 
-const StatusIndicator = ({ status }: { status: 'TRUE' | 'FALSE' }) => (
+const StatusIndicator = memo(({ status }: { status: 'TRUE' | 'FALSE' }) => (
   <span className={status === 'TRUE' ? 'text-green-400' : 'text-slate-500'}>
     {status === 'TRUE' ? '✓' : '✗'}
   </span>
-);
+));
 
-const ActionCell = ({ action }: { action: AgentAction }) => (
+const ActionCell = memo(({ action }: { action: AgentAction }) => (
   <div className="flex-1 min-w-0 flex items-start gap-1">
     <StatusIndicator status={action.Status} />
     <div className="min-w-0">
@@ -63,6 +63,49 @@ const ActionCell = ({ action }: { action: AgentAction }) => (
       )}
     </div>
   </div>
+));
+
+type RowState = 'end' | 'inRange' | 'outOfRange';
+
+const ActionRow = memo(
+  ({
+    step,
+    blueAction,
+    redAction,
+    rowState,
+    onStepClick,
+    rowRef,
+  }: {
+    step: number;
+    blueAction: AgentAction;
+    redAction: AgentAction;
+    rowState: RowState;
+    onStepClick: (step: number) => void;
+    rowRef?: React.RefObject<HTMLDivElement | null>;
+  }) => {
+    const className =
+      rowState === 'end'
+        ? 'bg-slate-600/80 border-l-2 border-blue-400'
+        : rowState === 'inRange'
+          ? 'bg-slate-700/60 border-l-2 border-slate-500'
+          : 'opacity-70 hover:opacity-100 hover:bg-slate-700/50';
+
+    const handleClick = useCallback(() => {
+      onStepClick(step);
+    }, [onStepClick, step]);
+
+    return (
+      <div
+        ref={rowRef}
+        onClick={handleClick}
+        className={`flex gap-2 py-1.5 px-2 rounded text-xs cursor-pointer ${className}`}
+      >
+        <div className="text-slate-500 w-5 shrink-0">{step + 1}</div>
+        <ActionCell action={blueAction} />
+        <ActionCell action={redAction} />
+      </div>
+    );
+  }
 );
 
 export const ActionHistory = ({
@@ -75,6 +118,16 @@ export const ActionHistory = ({
 }: ActionHistoryProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentRowRef = useRef<HTMLDivElement>(null);
+  const stepRangeRef = useRef(stepRange);
+  const onStepRangeChangeRef = useRef(onStepRangeChange);
+
+  useEffect(() => {
+    stepRangeRef.current = stepRange;
+  }, [stepRange]);
+
+  useEffect(() => {
+    onStepRangeChangeRef.current = onStepRangeChange;
+  }, [onStepRangeChange]);
 
   useEffect(() => {
     currentRowRef.current?.scrollIntoView({
@@ -83,27 +136,19 @@ export const ActionHistory = ({
     });
   }, [stepRange.end]);
 
-  const handleStepClick = (step: number) => {
-    if (step < stepRange.start) {
-      onStepRangeChange({ start: step, end: step });
+  const handleStepClick = useCallback((step: number) => {
+    const currentRange = stepRangeRef.current;
+    if (step < currentRange.start) {
+      onStepRangeChangeRef.current({ start: step, end: step });
     } else {
-      onStepRangeChange({ ...stepRange, end: step });
+      onStepRangeChangeRef.current({ ...currentRange, end: step });
     }
-  };
+  }, []);
 
-  const allSteps = Array.from({ length: blueActions.length }, (_, i) => i);
-
-  const getRowClass = (step: number): string => {
-    const isInRange = step >= stepRange.start && step <= stepRange.end;
-    const isEnd = step === stepRange.end;
-
-    if (isEnd) {
-      return 'bg-slate-600/80 border-l-2 border-blue-400';
-    }
-    if (isInRange) {
-      return 'bg-slate-700/60 border-l-2 border-slate-500';
-    }
-    return 'opacity-70 hover:opacity-100 hover:bg-slate-700/50';
+  const getRowState = (step: number): RowState => {
+    if (step === stepRange.end) return 'end';
+    if (step >= stepRange.start && step <= stepRange.end) return 'inRange';
+    return 'outOfRange';
   };
 
   return (
@@ -148,17 +193,16 @@ export const ActionHistory = ({
           scrollbarColor: '#475569 transparent',
         }}
       >
-        {allSteps.map((step) => (
-          <div
+        {blueActions.map((blueAction, step) => (
+          <ActionRow
             key={step}
-            ref={step === stepRange.end ? currentRowRef : undefined}
-            onClick={() => handleStepClick(step)}
-            className={`flex gap-2 py-1.5 px-2 rounded text-xs cursor-pointer ${getRowClass(step)}`}
-          >
-            <div className="text-slate-500 w-5 shrink-0">{step + 1}</div>
-            <ActionCell action={blueActions[step]} />
-            <ActionCell action={redActions[step]} />
-          </div>
+            step={step}
+            blueAction={blueAction}
+            redAction={redActions[step]}
+            rowState={getRowState(step)}
+            onStepClick={handleStepClick}
+            rowRef={step === stepRange.end ? currentRowRef : undefined}
+          />
         ))}
       </div>
     </div>
