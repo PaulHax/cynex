@@ -1,9 +1,5 @@
-# playback-controls Specification
+## MODIFIED Requirements
 
-## Purpose
-
-Provide controls for navigating between trajectory steps.
-## Requirements
 ### Requirement: Step Navigation
 
 The system SHALL allow navigating within a selected step range using a dual-thumb range slider, positioned in a full-width bar at the bottom of the viewport.
@@ -78,4 +74,3 @@ The system SHALL support automatic step advancement with play/stop controls in t
 - **AND** the range end reaches the last step
 - **THEN** auto-playback SHALL stop automatically
 - **AND** the stop button SHALL change to a play button
-

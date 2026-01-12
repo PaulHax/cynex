@@ -35,8 +35,8 @@ export const StepControls = ({
     'px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
-    <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
-      <div className="flex items-center justify-center gap-2 mb-3">
+    <div className="bg-slate-900 px-4 py-2 flex items-center gap-4">
+      <div className="flex items-center gap-1">
         <button
           className={buttonClass}
           onClick={handleFirst}
@@ -78,14 +78,16 @@ export const StepControls = ({
           ▶|
         </button>
       </div>
-      <RangeSlider
-        min={0}
-        max={maxStep}
-        value={stepRange}
-        onChange={onStepRangeChange}
-      />
-      <div className="text-center text-sm text-slate-300 mt-2">
+      <div className="text-sm text-slate-300 whitespace-nowrap">
         Steps {stepRange.start + 1} - {stepRange.end + 1} / {totalSteps}
+      </div>
+      <div className="flex-1">
+        <RangeSlider
+          min={0}
+          max={maxStep}
+          value={stepRange}
+          onChange={onStepRangeChange}
+        />
       </div>
     </div>
   );
