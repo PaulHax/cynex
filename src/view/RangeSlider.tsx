@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 export type StepRange = {
   start: number;
@@ -19,9 +19,7 @@ export const RangeSlider = ({
   onChange,
 }: RangeSliderProps) => {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState<'start' | 'end' | 'center' | null>(
-    null
-  );
+  const draggingRef = useRef<'start' | 'end' | 'center' | null>(null);
   const dragStartRef = useRef<{
     clientX: number;
     start: number;
@@ -70,7 +68,7 @@ export const RangeSlider = ({
     (thumb: 'start' | 'end') => (e: React.PointerEvent) => {
       e.stopPropagation();
       e.currentTarget.setPointerCapture(e.pointerId);
-      setDragging(thumb);
+      draggingRef.current = thumb;
     },
     []
   );
@@ -83,15 +81,16 @@ export const RangeSlider = ({
       start: valueRef.current.start,
       end: valueRef.current.end,
     };
-    setDragging('center');
+    draggingRef.current = 'center';
   }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!dragging) return;
+      const currentDragging = draggingRef.current;
+      if (!currentDragging) return;
       const current = valueRef.current;
 
-      if (dragging === 'center') {
+      if (currentDragging === 'center') {
         if (!dragStartRef.current || !trackRef.current) return;
         const rect = trackRef.current.getBoundingClientRect();
         const pixelDelta = e.clientX - dragStartRef.current.clientX;
@@ -116,7 +115,7 @@ export const RangeSlider = ({
       }
 
       const newValue = getPositionFromEvent(e.clientX);
-      if (dragging === 'start') {
+      if (currentDragging === 'start') {
         const clampedStart = Math.min(newValue, current.end);
         onChangeRef.current({ ...current, start: clampedStart });
       } else {
@@ -127,11 +126,11 @@ export const RangeSlider = ({
         }
       }
     },
-    [dragging, getPositionFromEvent, min, max]
+    [getPositionFromEvent, min, max]
   );
 
   const handlePointerUp = useCallback(() => {
-    setDragging(null);
+    draggingRef.current = null;
   }, []);
 
   const range = max - min || 1;
