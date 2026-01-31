@@ -5,7 +5,13 @@ on:
     branches: [main]
     paths:
       - 'mlflow-integration/**'
-      - '!mlflow-integration/.gitignore'
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'tailwind.config.js'
+      - 'tsconfig*.json'
   workflow_dispatch:
 
 jobs:
