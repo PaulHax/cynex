@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'mlflow-integration/**'
+      - '!mlflow-integration/.gitignore'
   workflow_dispatch:
 
 jobs:
@@ -12,68 +13,71 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check if version changed
-        id: version-check
+      - name: Bump version
+        id: bump
         run: |
-          if git diff HEAD~1 --name-only | grep -q 'mlflow-integration/pyproject.toml'; then
-            OLD_VERSION=$(git show HEAD~1:mlflow-integration/pyproject.toml | grep '^version' | cut -d'"' -f2)
-            NEW_VERSION=$(grep '^version' mlflow-integration/pyproject.toml | cut -d'"' -f2)
-            if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
-              echo "changed=true" >> $GITHUB_OUTPUT
-              echo "Version changed: $OLD_VERSION -> $NEW_VERSION"
-            else
-              echo "changed=false" >> $GITHUB_OUTPUT
-              echo "Version unchanged: $NEW_VERSION"
-            fi
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "pyproject.toml not modified"
-          fi
+          cd mlflow-integration
+          # Extract current version
+          VERSION=$(grep '^version' pyproject.toml | cut -d'"' -f2)
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+
+          # Bump patch
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+
+          # Update pyproject.toml
+          sed -i "s/^version = \"$VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Bumped version: $VERSION -> $NEW_VERSION"
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add mlflow-integration/pyproject.toml
+          git commit -m "Bump mlflow-cynex to v${{ steps.bump.outputs.version }} [skip ci]"
+          git push
 
       - name: Set up Node.js
-        if: steps.version-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Set up Python
-        if: steps.version-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install Python build tools
-        if: steps.version-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: pip install build
 
       - name: Build Cynex frontend
-        if: steps.version-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           npm ci
           VITE_BASE_PATH='/static-files/cynex/' npm run build
 
       - name: Copy dist to package
-        if: steps.version-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           mkdir -p mlflow-integration/src/mlflow_cynex/static/cynex
           cp -r dist/* mlflow-integration/src/mlflow_cynex/static/cynex/
           rm -rf mlflow-integration/src/mlflow_cynex/static/cynex/data
 
       - name: Build wheel
-        if: steps.version-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: mlflow-integration
         run: python -m build
 
       - name: Publish to PyPI
-        if: steps.version-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: mlflow-integration/dist/
