@@ -2,69 +2,39 @@ name: Publish mlflow-cynex to PyPI
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags: ['v*']
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
-
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Bump version
-        id: bump
+      - name: Inject version from tag
         run: |
-          cd mlflow-integration
-          # Extract current version
-          VERSION=$(grep '^version' pyproject.toml | cut -d'"' -f2)
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f2)
-          PATCH=$(echo $VERSION | cut -d. -f3)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          sed -i "s/version = \"0.0.0\"/version = \"$VERSION\"/" mlflow-integration/pyproject.toml
 
-          # Bump patch
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
-
-          # Update pyproject.toml
-          sed -i "s/^version = \"$VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
-
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "Bumped version: $VERSION -> $NEW_VERSION"
-
-      - name: Commit version bump
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add mlflow-integration/pyproject.toml
-          git commit -m "Bump mlflow-cynex to v${{ steps.bump.outputs.version }} [skip ci]"
-          git push
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
-      - name: Install Python build tools
-        run: pip install build
+      - run: pip install build
 
-      - name: Build Cynex frontend
+      - name: Build frontend
         run: |
           npm ci
           VITE_BASE_PATH='/static-files/cynex/' npm run build
 
-      - name: Copy dist to package
+      - name: Copy to package
         run: |
           mkdir -p mlflow-integration/src/mlflow_cynex/static/cynex
           cp -r dist/* mlflow-integration/src/mlflow_cynex/static/cynex/
@@ -78,3 +48,8 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: mlflow-integration/dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
