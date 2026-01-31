@@ -40,5 +40,16 @@ const trajectoryManifestPlugin = (): Plugin => {
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), tailwindcss(), trajectoryManifestPlugin()],
+  server: {
+    proxy: {
+      // Proxy MLflow artifact requests to avoid CORS issues
+      '/mlflow': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/mlflow/, ''),
+      },
+    },
+  },
 });

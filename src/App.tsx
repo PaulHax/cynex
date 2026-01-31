@@ -37,7 +37,25 @@ const App = () => {
   });
 
   useEffect(() => {
-    loadTrajectoryManifest().then(async (manifest) => {
+    const loadInitialTrajectory = async () => {
+      // Check for URL parameter first (e.g., ?file=/path/to/trajectory.json)
+      const params = new URLSearchParams(window.location.search);
+      const fileParam = params.get('file');
+
+      if (fileParam) {
+        try {
+          const data = await loadTrajectory(fileParam);
+          setTrajectory(data);
+          setTrajectoryName(fileParam.split('/').pop() ?? fileParam);
+          setInitialLoading(false);
+          return;
+        } catch (err) {
+          console.error('Failed to load trajectory from URL param:', err);
+        }
+      }
+
+      // Fall back to manifest
+      const manifest = await loadTrajectoryManifest();
       if (manifest.files.length > 0) {
         const firstFile = manifest.files[0];
         try {
@@ -49,7 +67,9 @@ const App = () => {
         }
       }
       setInitialLoading(false);
-    });
+    };
+
+    loadInitialTrajectory();
   }, []);
 
   const totalSteps = trajectory?.blue_actions.length ?? 0;
