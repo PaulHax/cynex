@@ -1,0 +1,50 @@
+name: Publish mlflow-cynex to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python build tools
+        run: pip install build
+
+      - name: Build Cynex frontend
+        run: |
+          npm ci
+          VITE_BASE_PATH='/static-files/cynex/' npm run build
+
+      - name: Copy dist to package
+        run: |
+          mkdir -p mlflow-integration/src/mlflow_cynex/static/cynex
+          cp -r dist/* mlflow-integration/src/mlflow_cynex/static/cynex/
+          rm -rf mlflow-integration/src/mlflow_cynex/static/cynex/data
+
+      - name: Build wheel
+        working-directory: mlflow-integration
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: mlflow-integration/dist/
