@@ -63,6 +63,35 @@ Use the file picker in the UI to load a trajectory JSON directly from your files
 }
 ```
 
+## MLflow Integration
+
+Install the Cynex viewer into your MLflow instance:
+
+```bash
+pip install mlflow-cynex
+mlflow-cynex install
+```
+
+Then restart your MLflow server. Cynex will be available at `/static-files/cynex/` and can display trajectories stored as MLflow artifacts.
+
+### Logging Trajectories
+
+```python
+import mlflow
+from mlflow_cynex import log_trajectory
+
+with mlflow.start_run():
+    log_trajectory(trajectory_data)  # dict or path to JSON file
+```
+
+### CLI Commands
+
+```bash
+mlflow-cynex install    # Install viewer into MLflow
+mlflow-cynex uninstall  # Remove viewer from MLflow
+mlflow-cynex status     # Check installation status
+```
+
 ## Tech Stack
 
 - React 19
