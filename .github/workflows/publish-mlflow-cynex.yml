@@ -3,15 +3,6 @@ name: Publish mlflow-cynex to PyPI
 on:
   push:
     branches: [main]
-    paths:
-      - 'mlflow-integration/**'
-      - 'src/**'
-      - 'public/**'
-      - 'index.html'
-      - 'package.json'
-      - 'vite.config.ts'
-      - 'tailwind.config.js'
-      - 'tsconfig*.json'
   workflow_dispatch:
 
 jobs:
