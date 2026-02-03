@@ -37,6 +37,9 @@ Issues = "https://github.com/user/cynex/issues"
 [project.scripts]
 mlflow-cynex = "mlflow_cynex.cli:main"
 
+[tool.hatch.build]
+artifacts = ["src/mlflow_cynex/static/**"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/mlflow_cynex"]
 
