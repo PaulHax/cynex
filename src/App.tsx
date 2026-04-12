@@ -391,7 +391,6 @@ const App = () => {
                 redActions={displayRedActions}
                 score={currentScore}
                 stepState={currentStepState}
-                totalHosts={isV2(trajectory) ? hostCount : undefined}
                 onStepRangeChange={setStepRange}
                 agentVisibility={agentVisibility}
                 onAgentVisibilityChange={setAgentVisibility}

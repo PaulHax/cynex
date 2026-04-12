@@ -3,21 +3,18 @@ import type { MetricScore, StepState } from '../trajectory/types';
 type MetricsCardProps = {
   score?: MetricScore;
   stepState?: StepState;
-  totalHosts?: number;
 };
 
-export const MetricsCard = ({
-  score,
-  stepState,
-  totalHosts,
-}: MetricsCardProps) => {
+export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
   if (!score && !stepState) return null;
 
-  // V2: show mission phase + compromise count
+  // V2: show mission phase + reward score
   if (!score && stepState) {
-    const compromisedCount = Object.values(stepState.host_compromise).filter(
-      (v) => v !== 'NONE'
-    ).length;
+    const rewardValues = Object.values(stepState.rewards);
+    const stepReward = rewardValues.length > 0 ? rewardValues[0] : 0;
+    const cumulativeValues = Object.values(stepState.cumulative_reward);
+    const cumulativeReward =
+      cumulativeValues.length > 0 ? cumulativeValues[0] : 0;
     return (
       <div className="bg-slate-700/50 rounded-lg px-3 py-2 flex items-center justify-between text-sm">
         <span className="font-semibold text-slate-300">Status</span>
@@ -29,10 +26,19 @@ export const MetricsCard = ({
             </span>
           </span>
           <span>
-            <span className="text-slate-400">Compromised</span>{' '}
-            <span className="font-bold text-red-300 ml-1">
-              {compromisedCount}
-              {totalHosts ? `/${totalHosts}` : ''}
+            <span className="text-slate-400">Reward</span>{' '}
+            <span
+              className={`font-bold ml-1 ${stepReward < 0 ? 'text-red-300' : stepReward > 0 ? 'text-green-300' : 'text-slate-200'}`}
+            >
+              {stepReward}
+            </span>
+          </span>
+          <span>
+            <span className="text-slate-400">Total</span>{' '}
+            <span
+              className={`font-bold ml-1 ${cumulativeReward < 0 ? 'text-red-300' : cumulativeReward > 0 ? 'text-green-300' : 'text-slate-200'}`}
+            >
+              {cumulativeReward}
             </span>
           </span>
         </div>

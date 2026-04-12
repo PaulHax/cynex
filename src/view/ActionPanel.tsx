@@ -16,7 +16,6 @@ type ActionPanelProps = {
   redActions: AgentAction[];
   score?: MetricScore;
   stepState?: StepState;
-  totalHosts?: number;
   onStepRangeChange: (range: StepRange) => void;
   agentVisibility: AgentVisibility;
   onAgentVisibilityChange: (visibility: AgentVisibility) => void;
@@ -33,7 +32,6 @@ export const ActionPanel = ({
   redActions,
   score,
   stepState,
-  totalHosts,
   onStepRangeChange,
   agentVisibility,
   onAgentVisibilityChange,
@@ -47,11 +45,7 @@ export const ActionPanel = ({
     </div>
 
     <div className="mb-3">
-      <MetricsCard
-        score={score}
-        stepState={stepState}
-        totalHosts={totalHosts}
-      />
+      <MetricsCard score={score} stepState={stepState} />
     </div>
 
     <ActionHistory

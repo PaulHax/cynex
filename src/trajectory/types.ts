@@ -93,6 +93,8 @@ export type StepState = {
   step: number;
   mission_phase: number;
   host_compromise: Record<string, 'NONE' | 'USER' | 'PRIVILEGED'>;
+  rewards: Record<string, number>;
+  cumulative_reward: Record<string, number>;
 };
 
 export type TrajectoryFileV2 = {
