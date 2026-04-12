@@ -3,13 +3,16 @@ import { DeckGL } from '@deck.gl/react';
 import { OrthographicView, type PickingInfo } from '@deck.gl/core';
 import {
   ScatterplotLayer,
-  LineLayer,
   PolygonLayer,
   PathLayer,
   TextLayer,
   IconLayer,
 } from '@deck.gl/layers';
-import type { LayoutResult, SubnetBounds } from '../network/computeLayout';
+import type {
+  LayoutResult,
+  SubnetBounds,
+  EdgePath,
+} from '../network/computeLayout';
 import {
   HOST_TYPE_COLORS,
   AGENT_COLORS,
@@ -22,10 +25,7 @@ import type { AgentAction } from '../trajectory/types';
 import type { NodeState } from '../trajectory/nodeState';
 import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
-import {
-  getMovementsInRange,
-  type Movement,
-} from '../trajectory/computeTrails';
+import { type Movement } from '../trajectory/computeTrails';
 
 import hostIconAtlas from '../assets/host-role-atlas.svg';
 import type { HostRole } from '../network/extractTopology';
@@ -33,6 +33,7 @@ import type { HostRole } from '../network/extractTopology';
 type NetworkGraphProps = {
   blueActions: AgentAction[];
   redActions: AgentAction[];
+  movements: Movement[];
   stepRange: StepRange;
   nodeStates?: Map<string, NodeState>;
   topology: LayoutResult | null;
@@ -170,6 +171,9 @@ const AGED_COLORS: Record<'blue' | 'red', RGBColor> = {
   red: [165, 105, 100], // muted red
 };
 
+const getAgentTeam = (agent: string): 'blue' | 'red' =>
+  agent.startsWith('blue') || agent === 'blue' ? 'blue' : 'red';
+
 const lerpColor = (
   from: RGBColor,
   to: RGBColor,
@@ -190,8 +194,9 @@ const createTrailPath = (
   const toPos = nodePositions.get(movement.toHost);
   if (!fromPos || !toPos) return null;
 
-  const freshColor = AGENT_COLORS[movement.agent];
-  const agedColor = AGED_COLORS[movement.agent];
+  const team = getAgentTeam(movement.agent);
+  const freshColor = AGENT_COLORS[team];
+  const agedColor = AGED_COLORS[team];
   const baseColor = lerpColor(agedColor, freshColor, ageFactor);
 
   const dx = toPos[0] - fromPos[0];
@@ -307,6 +312,7 @@ const HostTooltip = ({
 export const NetworkGraph = ({
   blueActions,
   redActions,
+  movements: allMovements,
   stepRange,
   nodeStates,
   topology,
@@ -403,7 +409,7 @@ export const NetworkGraph = ({
     subnetPolygons,
     subnetLabels,
     allNodes,
-    subnetConnectionEdges,
+    connectionPaths,
   } = useMemo(() => {
     if (!topology) {
       return {
@@ -411,7 +417,7 @@ export const NetworkGraph = ({
         subnetPolygons: [],
         subnetLabels: [],
         allNodes: [],
-        subnetConnectionEdges: [],
+        connectionPaths: [],
       };
     }
 
@@ -436,15 +442,13 @@ export const NetworkGraph = ({
       color: getSubnetColor(idx),
     }));
 
-    const formatSubnetLabel = (id: string): string => {
-      const parts = id.split('_');
-      const name = parts[0];
-      return name.charAt(0).toUpperCase() + name.slice(1);
-    };
+    const subnetLabelMap = new Map(
+      topology.subnets.map((s) => [s.id, s.label])
+    );
 
     const labels = topology.subnetBounds.map((bounds, idx) => ({
       id: bounds.id,
-      text: formatSubnetLabel(bounds.id),
+      text: subnetLabelMap.get(bounds.id) ?? bounds.id,
       position: [bounds.x, bounds.y] as [number, number],
       color: getSubnetColor(idx),
     }));
@@ -460,34 +464,35 @@ export const NetworkGraph = ({
           : HOST_TYPE_COLORS[host.type]) as RGBColor,
     }));
 
-    const connectionEdges = topology.subnetEdges.map((edge) => {
-      const sourceBounds = boundsMap.get(edge.sourceSubnet);
-      const targetBounds = boundsMap.get(edge.targetSubnet);
-
-      if (!sourceBounds || !targetBounds) {
-        return {
-          sourcePosition: [0, 0] as [number, number],
-          targetPosition: [0, 0] as [number, number],
-        };
-      }
-
-      const sourceRight = sourceBounds.x + sourceBounds.width;
-      const sourceCenterY = sourceBounds.y + sourceBounds.height / 2;
-      const targetLeft = targetBounds.x;
-      const targetCenterY = targetBounds.y + targetBounds.height / 2;
-
-      return {
-        sourcePosition: [sourceRight, sourceCenterY] as [number, number],
-        targetPosition: [targetLeft, targetCenterY] as [number, number],
-      };
-    });
+    // Use ELK-routed edge paths if available, fall back to straight lines
+    const connectionPaths: EdgePath[] =
+      topology.edgePaths.length > 0
+        ? topology.edgePaths
+        : topology.subnetEdges.map((edge) => {
+            const sb = boundsMap.get(edge.sourceSubnet);
+            const tb = boundsMap.get(edge.targetSubnet);
+            if (!sb || !tb)
+              return {
+                sourceSubnet: edge.sourceSubnet,
+                targetSubnet: edge.targetSubnet,
+                points: [] as [number, number][],
+              };
+            return {
+              sourceSubnet: edge.sourceSubnet,
+              targetSubnet: edge.targetSubnet,
+              points: [
+                [sb.x + sb.width / 2, sb.y + sb.height / 2] as [number, number],
+                [tb.x + tb.width / 2, tb.y + tb.height / 2] as [number, number],
+              ],
+            };
+          });
 
     return {
       nodePositions: positions,
       subnetPolygons: polygons,
       subnetLabels: labels,
       allNodes: hostNodes,
-      subnetConnectionEdges: connectionEdges,
+      connectionPaths,
     };
   }, [topology]);
 
@@ -515,11 +520,8 @@ export const NetworkGraph = ({
   };
 
   const movements = useMemo(
-    () =>
-      getMovementsInRange(blueActions, redActions, stepRange).filter(
-        (m) => agentVisibility[m.agent]
-      ),
-    [blueActions, redActions, stepRange, agentVisibility]
+    () => allMovements.filter((m) => agentVisibility[getAgentTeam(m.agent)]),
+    [allMovements, agentVisibility]
   );
 
   const trails: TrailData[] = useMemo(() => {
@@ -660,14 +662,15 @@ export const NetworkGraph = ({
       fontSettings: { sdf: true, fontSize: 64, radius: 24, buffer: 12 },
     }),
 
-    new LineLayer({
+    new PathLayer<EdgePath>({
       id: 'subnet-connections',
-      data: subnetConnectionEdges,
-      getSourcePosition: (d) => d.sourcePosition,
-      getTargetPosition: (d) => d.targetPosition,
+      data: connectionPaths,
+      getPath: (d) => d.points,
       getColor: EDGE_COLORS.firewall,
       getWidth: 3,
       widthUnits: 'pixels',
+      capRounded: true,
+      jointRounded: true,
     }),
 
     new ScatterplotLayer({

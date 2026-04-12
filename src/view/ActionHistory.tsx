@@ -45,7 +45,7 @@ const EyeIcon = ({ visible }: { visible: boolean }) => (
   </svg>
 );
 
-const StatusIndicator = memo(({ status }: { status: 'TRUE' | 'FALSE' }) => (
+const StatusIndicator = memo(({ status }: { status: string }) => (
   <span className={status === 'TRUE' ? 'text-green-400' : 'text-slate-500'}>
     {status === 'TRUE' ? '✓' : '✗'}
   </span>

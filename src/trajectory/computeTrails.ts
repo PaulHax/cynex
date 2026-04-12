@@ -1,10 +1,10 @@
-import type { AgentAction } from './types';
+import type { AgentAction, AgentActionV2 } from './types';
 import type { StepRange } from '../view/RangeSlider';
 
 export type Movement = {
   fromHost: string;
   toHost: string;
-  agent: 'blue' | 'red';
+  agent: string;
   step: number;
 };
 
@@ -39,6 +39,40 @@ export const getMovementsInRange = (
         agent: 'red',
         step,
       });
+    }
+  }
+
+  return movements;
+};
+
+/** V2: compute movements from per-agent action arrays (skip green) */
+export const getMovementsInRangeV2 = (
+  agentActions: Record<string, AgentActionV2[]>,
+  blueAgents: string[],
+  redAgents: string[],
+  range: StepRange
+): Movement[] => {
+  const movements: Movement[] = [];
+  const agents = [...blueAgents, ...redAgents];
+
+  for (const agentName of agents) {
+    const actions = agentActions[agentName];
+    if (!actions) continue;
+
+    for (let step = range.start; step <= range.end; step++) {
+      const prevStep = step - 1;
+      if (prevStep < 0) continue;
+
+      const prev = actions[prevStep];
+      const curr = actions[step];
+      if (prev?.Host && curr?.Host && prev.Host !== curr.Host) {
+        movements.push({
+          fromHost: prev.Host,
+          toHost: curr.Host,
+          agent: agentName,
+          step,
+        });
+      }
     }
   }
 

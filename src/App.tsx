@@ -15,14 +15,49 @@ import {
   loadTrajectory,
   parseTrajectoryFile,
 } from './trajectory/loader';
-import { computeNodeStates } from './trajectory/nodeState';
+import { computeNodeStates, computeNodeStatesV2 } from './trajectory/nodeState';
+import {
+  getMovementsInRange,
+  getMovementsInRangeV2,
+} from './trajectory/computeTrails';
 import { useNetworkTopology } from './network/useNetworkTopology';
-import type { TrajectoryFile } from './trajectory/types';
+import type {
+  AnyTrajectoryFile,
+  AgentAction,
+  AgentActionV2,
+} from './trajectory/types';
+import { isV2 } from './trajectory/types';
 
 export type AgentVisibility = { blue: boolean; red: boolean };
 
+/** Pick the most interesting non-Sleep action per step for a team */
+const pickRepresentativeActions = (
+  agentActions: Record<string, AgentActionV2[]>,
+  agentNames: string[],
+  totalSteps: number
+): AgentAction[] => {
+  const result: AgentAction[] = [];
+  for (let step = 0; step < totalSteps; step++) {
+    let best: AgentActionV2 | null = null;
+    for (const name of agentNames) {
+      const a = agentActions[name]?.[step];
+      if (!a || a.Action === 'Sleep') continue;
+      if (!best || (a.Status === 'TRUE' && best.Status !== 'TRUE')) {
+        best = a;
+      }
+    }
+    const action = best ?? agentActions[agentNames[0]]?.[step];
+    result.push({
+      Action: action?.Action ?? 'Sleep',
+      Status: action?.Status === 'TRUE' ? 'TRUE' : 'FALSE',
+      Host: action?.Host ?? '',
+    });
+  }
+  return result;
+};
+
 const App = () => {
-  const [trajectory, setTrajectory] = useState<TrajectoryFile | null>(null);
+  const [trajectory, setTrajectory] = useState<AnyTrajectoryFile | null>(null);
   const [trajectoryName, setTrajectoryName] = useState<string | null>(null);
   const [stepRange, setStepRange] = useState<StepRange>({ start: 0, end: 0 });
   const [initialLoading, setInitialLoading] = useState(true);
@@ -72,7 +107,34 @@ const App = () => {
     loadInitialTrajectory();
   }, []);
 
-  const totalSteps = trajectory?.blue_actions.length ?? 0;
+  const totalSteps = trajectory
+    ? isV2(trajectory)
+      ? trajectory.total_steps
+      : trajectory.blue_actions.length
+    : 0;
+
+  // For V2: compute representative single blue/red action per step
+  const { displayBlueActions, displayRedActions } = useMemo(() => {
+    if (!trajectory) return { displayBlueActions: [], displayRedActions: [] };
+    if (isV2(trajectory)) {
+      return {
+        displayBlueActions: pickRepresentativeActions(
+          trajectory.agent_actions,
+          trajectory.blue_agents,
+          trajectory.total_steps
+        ),
+        displayRedActions: pickRepresentativeActions(
+          trajectory.agent_actions,
+          trajectory.red_agents,
+          trajectory.total_steps
+        ),
+      };
+    }
+    return {
+      displayBlueActions: trajectory.blue_actions,
+      displayRedActions: trajectory.red_actions,
+    };
+  }, [trajectory]);
 
   useEffect(() => {
     if (!isPlaying || totalSteps === 0) return;
@@ -97,7 +159,7 @@ const App = () => {
   }, [stepRange.end, totalSteps]);
 
   const handleTrajectoryLoad = useCallback(
-    (data: TrajectoryFile, name: string) => {
+    (data: AnyTrajectoryFile, name: string) => {
       setTrajectory(data);
       setTrajectoryName(name);
       setStepRange({ start: 0, end: 0 });
@@ -146,6 +208,9 @@ const App = () => {
 
   const nodeStates = useMemo(() => {
     if (!trajectory) return undefined;
+    if (isV2(trajectory)) {
+      return computeNodeStatesV2(trajectory.step_states, stepRange.end);
+    }
     return computeNodeStates(
       trajectory.blue_actions,
       trajectory.red_actions,
@@ -153,7 +218,46 @@ const App = () => {
     );
   }, [trajectory, stepRange.end]);
 
+  const movements = useMemo(() => {
+    if (!trajectory) return [];
+    if (isV2(trajectory)) {
+      return getMovementsInRangeV2(
+        trajectory.agent_actions,
+        trajectory.blue_agents,
+        trajectory.red_agents,
+        stepRange
+      );
+    }
+    return getMovementsInRange(
+      trajectory.blue_actions,
+      trajectory.red_actions,
+      stepRange
+    );
+  }, [trajectory, stepRange]);
+
   const topology = useNetworkTopology(trajectory);
+
+  const hostCount = trajectory
+    ? Object.keys(trajectory.network_topology).length
+    : 0;
+
+  const headerText = trajectory
+    ? isV2(trajectory)
+      ? `CC4 — ${hostCount} hosts — Episode ${trajectory.episode}`
+      : `${trajectory.blue_agent_name} vs ${trajectory.red_agent_name} — Episode ${trajectory.episode} — ${hostCount} hosts`
+    : null;
+
+  const currentScore =
+    trajectory && !isV2(trajectory)
+      ? trajectory.metric_scores[stepRange.end]
+      : undefined;
+
+  const currentStepState =
+    trajectory && isV2(trajectory)
+      ? trajectory.step_states[
+          Math.min(stepRange.end, trajectory.step_states.length - 1)
+        ]
+      : undefined;
 
   if (initialLoading) {
     return (
@@ -216,12 +320,8 @@ const App = () => {
                   error={dropError}
                 />
               </div>
-              {trajectory && (
-                <p className="text-slate-400 text-sm mt-1">
-                  {trajectory.blue_agent_name} vs {trajectory.red_agent_name} —
-                  Episode {trajectory.episode} —{' '}
-                  {Object.keys(trajectory.network_topology).length} hosts
-                </p>
+              {headerText && (
+                <p className="text-slate-400 text-sm mt-1">{headerText}</p>
               )}
             </div>
           </header>
@@ -238,10 +338,12 @@ const App = () => {
             <div className="flex-1 min-h-0">
               <ActionPanel
                 stepRange={stepRange}
-                totalSteps={trajectory.blue_actions.length}
-                blueActions={trajectory.blue_actions}
-                redActions={trajectory.red_actions}
-                score={trajectory.metric_scores[stepRange.end]}
+                totalSteps={totalSteps}
+                blueActions={displayBlueActions}
+                redActions={displayRedActions}
+                score={currentScore}
+                stepState={currentStepState}
+                totalHosts={isV2(trajectory) ? hostCount : undefined}
                 onStepRangeChange={setStepRange}
                 agentVisibility={agentVisibility}
                 onAgentVisibilityChange={setAgentVisibility}
@@ -253,8 +355,9 @@ const App = () => {
         <div className="flex-1 relative bg-slate-950">
           {trajectory && (
             <NetworkGraph
-              blueActions={trajectory.blue_actions}
-              redActions={trajectory.red_actions}
+              blueActions={displayBlueActions}
+              redActions={displayRedActions}
+              movements={movements}
               stepRange={stepRange}
               nodeStates={nodeStates}
               topology={topology}
@@ -267,7 +370,7 @@ const App = () => {
       {trajectory && (
         <StepControls
           stepRange={stepRange}
-          totalSteps={trajectory.blue_actions.length}
+          totalSteps={totalSteps}
           onStepRangeChange={setStepRange}
           isPlaying={isPlaying}
           onPlayToggle={handlePlayToggle}

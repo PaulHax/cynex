@@ -17,12 +17,21 @@ export type SubnetBounds = {
   height: number;
 };
 
+export type EdgePath = {
+  sourceSubnet: string;
+  targetSubnet: string;
+  points: [number, number][];
+};
+
 export type LayoutResult = {
   hosts: HostDefinition[];
   subnets: SubnetDefinition[];
   subnetBounds: SubnetBounds[];
   subnetEdges: SubnetEdge[];
+  edgePaths: EdgePath[];
 };
+
+export type LayoutDirection = 'RIGHT' | 'DOWN';
 
 const NODE_WIDTH = 30;
 const NODE_HEIGHT = 30;
@@ -84,6 +93,13 @@ const computeSubnetSize = (
   nodeCount: number,
   hasDefenderRow: boolean
 ): { width: number; height: number } => {
+  if (nodeCount === 0 && !hasDefenderRow) {
+    // Empty subnet (e.g., Internet) -- small labeled box
+    return {
+      width: PADDING.left + PADDING.right,
+      height: PADDING.top + PADDING.bottom,
+    };
+  }
   const cols = computeSquareColumns(nodeCount);
   const rows = Math.ceil(nodeCount / cols);
   const contentWidth = cols * NODE_WIDTH + (cols - 1) * NODE_SPACING;
@@ -96,8 +112,105 @@ const computeSubnetSize = (
   };
 };
 
+/** BFS from the most-connected subnet to assign tier levels */
+const computeSubnetTiers = (
+  subnetEdges: SubnetEdge[],
+  subnetIds: string[]
+): Map<string, number> => {
+  const adj = new Map<string, Set<string>>();
+  for (const id of subnetIds) adj.set(id, new Set());
+  for (const edge of subnetEdges) {
+    adj.get(edge.sourceSubnet)?.add(edge.targetSubnet);
+    adj.get(edge.targetSubnet)?.add(edge.sourceSubnet);
+  }
+
+  // Root = most-connected node (Internet in CC4)
+  let root = subnetIds[0];
+  let maxDeg = 0;
+  for (const [id, neighbors] of adj) {
+    if (neighbors.size > maxDeg) {
+      maxDeg = neighbors.size;
+      root = id;
+    }
+  }
+
+  const tiers = new Map<string, number>();
+  const queue = [root];
+  tiers.set(root, 0);
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const tier = tiers.get(current)!;
+    for (const neighbor of adj.get(current) ?? []) {
+      if (!tiers.has(neighbor)) {
+        tiers.set(neighbor, tier + 1);
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return tiers;
+};
+
+/**
+ * Sort subnets so children align under their parents across tiers.
+ * Within the same tier and same parent group, sort alphabetically
+ * which naturally groups "zone_a"/"zone_b" pairs together.
+ */
+const sortSubnetsForLayout = (
+  subnetIds: string[],
+  tiers: Map<string, number>,
+  subnetEdges: SubnetEdge[]
+): string[] => {
+  const adj = new Map<string, Set<string>>();
+  for (const id of subnetIds) adj.set(id, new Set());
+  for (const edge of subnetEdges) {
+    adj.get(edge.sourceSubnet)?.add(edge.targetSubnet);
+    adj.get(edge.targetSubnet)?.add(edge.sourceSubnet);
+  }
+
+  const maxTier = Math.max(...tiers.values());
+  const tierGroups: string[][] = Array.from({ length: maxTier + 1 }, () => []);
+  for (const id of subnetIds) {
+    tierGroups[tiers.get(id) ?? 0].push(id);
+  }
+
+  // Tier 0 stays as-is (usually just the root)
+  const result: string[] = [...tierGroups[0]];
+
+  for (let t = 1; t <= maxTier; t++) {
+    // Build position index for the previous tier
+    const prevOrder = new Map<string, number>();
+    let idx = 0;
+    for (const id of result) {
+      if (tiers.get(id) === t - 1) prevOrder.set(id, idx++);
+    }
+
+    tierGroups[t].sort((a, b) => {
+      const aParents = [...(adj.get(a) ?? [])].filter(
+        (n) => tiers.get(n) === t - 1
+      );
+      const bParents = [...(adj.get(b) ?? [])].filter(
+        (n) => tiers.get(n) === t - 1
+      );
+      const aMin = Math.min(
+        ...aParents.map((p) => prevOrder.get(p) ?? Infinity)
+      );
+      const bMin = Math.min(
+        ...bParents.map((p) => prevOrder.get(p) ?? Infinity)
+      );
+      if (aMin !== bMin) return aMin - bMin;
+      return a.localeCompare(b);
+    });
+
+    result.push(...tierGroups[t]);
+  }
+
+  return result;
+};
+
 export const computeLayout = async (
-  topology: ExtractedTopology
+  topology: ExtractedTopology,
+  direction: LayoutDirection = 'RIGHT'
 ): Promise<LayoutResult> => {
   const elk = new ELK();
 
@@ -119,16 +232,36 @@ export const computeLayout = async (
     }
   }
 
-  const subnetNodes: ElkNode[] = topology.subnets.map((subnet) => {
-    const regularHosts = regularHostsBySubnet.get(subnet.id) ?? [];
-    const hasDefender = defenderBySubnet.has(subnet.id);
+  // For DOWN direction, compute tier partitions and sort for grouping
+  const subnetIds = topology.subnets.map((s) => s.id);
+  const tiers =
+    direction === 'DOWN'
+      ? computeSubnetTiers(topology.subnetEdges, subnetIds)
+      : null;
+
+  const sortedOrder = tiers
+    ? sortSubnetsForLayout(subnetIds, tiers, topology.subnetEdges)
+    : subnetIds;
+
+  const makeSubnetNode = (subnetId: string): ElkNode => {
+    const regularHosts = regularHostsBySubnet.get(subnetId) ?? [];
+    const hasDefender = defenderBySubnet.has(subnetId);
     const size = computeSubnetSize(regularHosts.length, hasDefender);
-    return {
-      id: `subnet_${subnet.id}`,
+    const node: ElkNode = {
+      id: `subnet_${subnetId}`,
       width: size.width,
       height: size.height,
     };
-  });
+    if (tiers) {
+      node.layoutOptions = {
+        'elk.partitioning.partition': String(tiers.get(subnetId) ?? 0),
+      };
+    }
+    return node;
+  };
+
+  // Build ELK children in sorted order so forceNodeModelOrder keeps grouping
+  const subnetNodes: ElkNode[] = sortedOrder.map(makeSubnetNode);
 
   const elkEdges: ElkExtendedEdge[] = topology.subnetEdges.map((edge, idx) => ({
     id: `edge_${idx}`,
@@ -136,14 +269,26 @@ export const computeLayout = async (
     targets: [`subnet_${edge.targetSubnet}`],
   }));
 
+  const layoutOptions: Record<string, string> = {
+    'elk.algorithm': 'layered',
+    'elk.direction': direction,
+    'elk.spacing.nodeNode': '40',
+    'elk.layered.spacing.nodeNodeBetweenLayers': '60',
+    'elk.edgeRouting': 'ORTHOGONAL',
+    'elk.layered.spacing.edgeEdgeBetweenLayers': '20',
+    'elk.layered.spacing.edgeNodeBetweenLayers': '20',
+    'elk.layered.nodePlacement.strategy': 'BRANDES_KOEPF',
+  };
+
+  if (tiers) {
+    layoutOptions['elk.partitioning.activate'] = 'true';
+    layoutOptions['elk.layered.crossingMinimization.forceNodeModelOrder'] =
+      'true';
+  }
+
   const graph: ElkNode = {
     id: 'root',
-    layoutOptions: {
-      'elk.algorithm': 'layered',
-      'elk.direction': 'RIGHT',
-      'elk.spacing.nodeNode': '40',
-      'elk.layered.spacing.nodeNodeBetweenLayers': '40',
-    },
+    layoutOptions,
     children: subnetNodes,
     edges: elkEdges,
   };
@@ -160,6 +305,45 @@ export const computeLayout = async (
         y: node.y ?? 0,
         width: node.width ?? 200,
         height: node.height ?? 200,
+      });
+    }
+  }
+
+  // Extract ELK-routed edge paths
+  const edgeSourceTargetMap = new Map<
+    string,
+    { source: string; target: string }
+  >();
+  for (const edge of topology.subnetEdges) {
+    // Find the matching ELK edge
+    for (const elkEdge of elkEdges) {
+      if (
+        elkEdge.sources[0] === `subnet_${edge.sourceSubnet}` &&
+        elkEdge.targets[0] === `subnet_${edge.targetSubnet}`
+      ) {
+        edgeSourceTargetMap.set(elkEdge.id, {
+          source: edge.sourceSubnet,
+          target: edge.targetSubnet,
+        });
+      }
+    }
+  }
+
+  const edgePaths: EdgePath[] = [];
+  for (const edge of layoutedGraph.edges ?? []) {
+    const meta = edgeSourceTargetMap.get(edge.id);
+    if (!meta) continue;
+    for (const section of edge.sections ?? []) {
+      const points: [number, number][] = [];
+      points.push([section.startPoint.x, section.startPoint.y]);
+      for (const bp of section.bendPoints ?? []) {
+        points.push([bp.x, bp.y]);
+      }
+      points.push([section.endPoint.x, section.endPoint.y]);
+      edgePaths.push({
+        sourceSubnet: meta.source,
+        targetSubnet: meta.target,
+        points,
       });
     }
   }
@@ -229,5 +413,6 @@ export const computeLayout = async (
     subnets,
     subnetBounds,
     subnetEdges: topology.subnetEdges,
+    edgePaths,
   };
 };

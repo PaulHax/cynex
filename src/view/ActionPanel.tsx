@@ -1,4 +1,4 @@
-import type { AgentAction, MetricScore } from '../trajectory/types';
+import type { AgentAction, MetricScore, StepState } from '../trajectory/types';
 import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
 import { MetricsCard } from './MetricsCard';
@@ -10,6 +10,8 @@ type ActionPanelProps = {
   blueActions: AgentAction[];
   redActions: AgentAction[];
   score?: MetricScore;
+  stepState?: StepState;
+  totalHosts?: number;
   onStepRangeChange: (range: StepRange) => void;
   agentVisibility: AgentVisibility;
   onAgentVisibilityChange: (visibility: AgentVisibility) => void;
@@ -21,6 +23,8 @@ export const ActionPanel = ({
   blueActions,
   redActions,
   score,
+  stepState,
+  totalHosts,
   onStepRangeChange,
   agentVisibility,
   onAgentVisibilityChange,
@@ -31,7 +35,11 @@ export const ActionPanel = ({
     </div>
 
     <div className="mb-3">
-      <MetricsCard score={score} />
+      <MetricsCard
+        score={score}
+        stepState={stepState}
+        totalHosts={totalHosts}
+      />
     </div>
 
     <ActionHistory

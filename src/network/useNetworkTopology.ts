@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import type { TrajectoryFile } from '../trajectory/types';
-import { extractTopology } from './extractTopology';
+import type { AnyTrajectoryFile } from '../trajectory/types';
+import { isV2 } from '../trajectory/types';
+import { extractTopology, extractTopologyV2 } from './extractTopology';
 import { computeLayout, type LayoutResult } from './computeLayout';
 
 type LayoutState = {
   layout: LayoutResult | null;
-  forTrajectory: TrajectoryFile | null;
+  forTrajectory: AnyTrajectoryFile | null;
 };
 
 export const useNetworkTopology = (
-  trajectory: TrajectoryFile | null
+  trajectory: AnyTrajectoryFile | null
 ): LayoutResult | null => {
   const [layoutState, setLayoutState] = useState<LayoutState>({
     layout: null,
@@ -24,8 +25,14 @@ export const useNetworkTopology = (
     let cancelled = false;
 
     const compute = async () => {
-      const extracted = extractTopology(trajectory.network_topology);
-      const result = await computeLayout(extracted);
+      const v2 = isV2(trajectory);
+      const extracted = v2
+        ? extractTopologyV2(
+            trajectory.network_topology,
+            trajectory.subnet_metadata
+          )
+        : extractTopology(trajectory.network_topology);
+      const result = await computeLayout(extracted, v2 ? 'DOWN' : 'RIGHT');
       if (!cancelled) {
         setLayoutState({ layout: result, forTrajectory: trajectory });
       }
