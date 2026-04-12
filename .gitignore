@@ -28,3 +28,6 @@ dist-ssr
 
 # Generated trajectory manifest
 public/data/trajectories/manifest.json
+
+# CC4 trajectories are too large for git (~8MB each)
+public/data/trajectories/cc4-*.json
