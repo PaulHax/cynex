@@ -21,7 +21,7 @@ import {
   getSubnetColor,
   type RGBColor,
 } from '../network/colors';
-import type { AgentAction } from '../trajectory/types';
+import type { ActiveAction } from '../trajectory/types';
 import type { NodeState } from '../trajectory/nodeState';
 import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
@@ -31,8 +31,7 @@ import hostIconAtlas from '../assets/host-role-atlas.svg';
 import type { HostRole } from '../network/extractTopology';
 
 type NetworkGraphProps = {
-  blueActions: AgentAction[];
-  redActions: AgentAction[];
+  activeActions: ActiveAction[];
   movements: Movement[];
   stepRange: StepRange;
   nodeStates?: Map<string, NodeState>;
@@ -238,17 +237,27 @@ const createTrailPath = (
   return { path, color: colors };
 };
 
+const shortAgentName = (name: string): string => {
+  const match = name.match(/^(blue|red)_agent_(\d+)$/);
+  if (match) return `${match[1][0].toUpperCase()}${match[2]}`;
+  return name;
+};
+
+const TEAM_COLORS: Record<'blue' | 'red', string> = {
+  blue: '#60a5fa',
+  red: '#f87171',
+};
+
 const ActionLabel = ({
-  action,
+  active,
   position,
-  color,
 }: {
-  action: AgentAction;
+  active: ActiveAction;
   position: { x: number; y: number };
-  color: string;
 }) => {
-  const statusIcon = action.Status === 'TRUE' ? '✓' : '✗';
-  const statusColor = action.Status === 'TRUE' ? '#4ade80' : '#94a3b8';
+  const statusIcon = active.Status === 'TRUE' ? '✓' : '✗';
+  const statusColor = active.Status === 'TRUE' ? '#4ade80' : '#94a3b8';
+  const color = TEAM_COLORS[active.team];
   return (
     <div
       style={{
@@ -271,7 +280,10 @@ const ActionLabel = ({
       }}
     >
       <span style={{ color: statusColor }}>{statusIcon}</span>
-      <span style={{ color: '#e2e8f0' }}>{action.Action}</span>
+      <span style={{ color, fontSize: '11px' }}>
+        {shortAgentName(active.agent)}
+      </span>
+      <span style={{ color: '#e2e8f0' }}>{active.Action}</span>
     </div>
   );
 };
@@ -310,8 +322,7 @@ const HostTooltip = ({
 );
 
 export const NetworkGraph = ({
-  blueActions,
-  redActions,
+  activeActions,
   movements: allMovements,
   stepRange,
   nodeStates,
@@ -333,8 +344,14 @@ export const NetworkGraph = ({
     y: number;
   } | null>(null);
 
-  const currentBlueAction = blueActions[stepRange.end];
-  const currentRedAction = redActions[stepRange.end];
+  // Filter active actions by visibility
+  const visibleActions = activeActions.filter((a) => agentVisibility[a.team]);
+
+  // Collect all hosts being targeted for highlight rings
+  const activeHosts = new Map<string, 'blue' | 'red'>();
+  for (const a of visibleActions) {
+    if (a.Host) activeHosts.set(a.Host, a.team);
+  }
 
   const onHover = useCallback((info: PickingInfo<NodeData>) => {
     if (info.object && info.x !== undefined && info.y !== undefined) {
@@ -497,10 +514,8 @@ export const NetworkGraph = ({
   }, [topology]);
 
   const getHighlightColor = (hostId: string): RGBColor | null => {
-    if (agentVisibility.blue && currentBlueAction?.Host === hostId)
-      return AGENT_COLORS.blue;
-    if (agentVisibility.red && currentRedAction?.Host === hostId)
-      return AGENT_COLORS.red;
+    const team = activeHosts.get(hostId);
+    if (team) return AGENT_COLORS[team];
     return null;
   };
 
@@ -548,90 +563,38 @@ export const NetworkGraph = ({
     return [screenX, screenY];
   };
 
-  const getActionLabelPosition = (
-    action: AgentAction | undefined,
-    pixelOffset: number
-  ): { x: number; y: number } | null => {
-    if (!action?.Host) return null;
-    const pos = nodePositions.get(action.Host);
-    if (!pos) return null;
-    const screenPos = worldToScreen(pos[0], pos[1]);
-    if (!screenPos) return null;
-    return { x: screenPos[0], y: screenPos[1] + pixelOffset };
-  };
+  const LABEL_OFFSET_Y = -40;
+  const LABEL_STACK_GAP = 30;
 
-  const TOOLTIP_OFFSET_Y = -40;
-  const TOOLTIP_HEIGHT_ESTIMATE = 28;
-  const NUDGE_MARGIN = 4;
-
-  const estimateTooltipWidth = (actionText: string): number => {
-    const PADDING = 12;
-    const ICON_AND_GAP = 14;
-    const CHAR_WIDTH = 7;
-    return PADDING + ICON_AND_GAP + actionText.length * CHAR_WIDTH;
-  };
-
-  const rawBluePos = getActionLabelPosition(
-    currentBlueAction,
-    TOOLTIP_OFFSET_Y
-  );
-  const rawRedPos = getActionLabelPosition(currentRedAction, TOOLTIP_OFFSET_Y);
-
-  const computeNudgedPositions = (
-    pos1: { x: number; y: number } | null,
-    pos2: { x: number; y: number } | null,
-    action1: AgentAction | undefined,
-    action2: AgentAction | undefined
-  ): [{ x: number; y: number } | null, { x: number; y: number } | null] => {
-    if (!pos1 || !pos2 || !action1 || !action2) return [pos1, pos2];
-
-    const halfWidth1 = estimateTooltipWidth(action1.Action) / 2;
-    const halfWidth2 = estimateTooltipWidth(action2.Action) / 2;
-    const halfHeight = TOOLTIP_HEIGHT_ESTIMATE / 2;
-
-    const box1 = {
-      left: pos1.x - halfWidth1,
-      right: pos1.x + halfWidth1,
-      top: pos1.y - halfHeight,
-      bottom: pos1.y + halfHeight,
-    };
-    const box2 = {
-      left: pos2.x - halfWidth2,
-      right: pos2.x + halfWidth2,
-      top: pos2.y - halfHeight,
-      bottom: pos2.y + halfHeight,
-    };
-
-    const overlapX = box1.right > box2.left && box1.left < box2.right;
-    const overlapY = box1.bottom > box2.top && box1.top < box2.bottom;
-
-    if (overlapX && overlapY) {
-      const overlapAmount =
-        Math.min(box1.right, box2.right) - Math.max(box1.left, box2.left);
-      const nudgeDistance = overlapAmount / 2 + NUDGE_MARGIN;
-
-      if (pos1.x <= pos2.x) {
-        return [
-          { x: pos1.x - nudgeDistance, y: pos1.y },
-          { x: pos2.x + nudgeDistance, y: pos2.y },
-        ];
-      } else {
-        return [
-          { x: pos1.x + nudgeDistance, y: pos1.y },
-          { x: pos2.x - nudgeDistance, y: pos2.y },
-        ];
-      }
+  // Compute positioned labels, stacking vertically when multiple agents target same host
+  const actionLabels: {
+    active: ActiveAction;
+    position: { x: number; y: number };
+  }[] = [];
+  {
+    const byHost = new Map<string, ActiveAction[]>();
+    for (const a of visibleActions) {
+      if (!a.Host) continue;
+      const list = byHost.get(a.Host) ?? [];
+      list.push(a);
+      byHost.set(a.Host, list);
     }
-
-    return [pos1, pos2];
-  };
-
-  const [bluePos, redPos] = computeNudgedPositions(
-    rawBluePos,
-    rawRedPos,
-    currentBlueAction,
-    currentRedAction
-  );
+    for (const [host, actions] of byHost) {
+      const pos = nodePositions.get(host);
+      if (!pos) continue;
+      const screenPos = worldToScreen(pos[0], pos[1]);
+      if (!screenPos) continue;
+      actions.forEach((active, idx) => {
+        actionLabels.push({
+          active,
+          position: {
+            x: screenPos[0],
+            y: screenPos[1] + LABEL_OFFSET_Y - idx * LABEL_STACK_GAP,
+          },
+        });
+      });
+    }
+  }
 
   const layers = [
     new PolygonLayer({
@@ -692,16 +655,8 @@ export const NetworkGraph = ({
       pickable: true,
       updateTriggers: {
         getFillColor: [nodeStates],
-        getLineColor: [
-          currentBlueAction?.Host,
-          currentRedAction?.Host,
-          agentVisibility,
-        ],
-        getLineWidth: [
-          currentBlueAction?.Host,
-          currentRedAction?.Host,
-          agentVisibility,
-        ],
+        getLineColor: [activeHosts],
+        getLineWidth: [activeHosts],
       },
     }),
 
@@ -724,16 +679,8 @@ export const NetworkGraph = ({
       antialiasing: true,
       pickable: false,
       updateTriggers: {
-        getLineColor: [
-          currentBlueAction?.Host,
-          currentRedAction?.Host,
-          agentVisibility,
-        ],
-        getLineWidth: [
-          currentBlueAction?.Host,
-          currentRedAction?.Host,
-          agentVisibility,
-        ],
+        getLineColor: [activeHosts],
+        getLineWidth: [activeHosts],
       },
     }),
 
@@ -801,20 +748,13 @@ export const NetworkGraph = ({
           useDevicePixels={true}
         />
       )}
-      {agentVisibility.blue && currentBlueAction && bluePos && (
+      {actionLabels.map((label) => (
         <ActionLabel
-          action={currentBlueAction}
-          position={bluePos}
-          color="#60a5fa"
+          key={label.active.agent}
+          active={label.active}
+          position={label.position}
         />
-      )}
-      {agentVisibility.red && currentRedAction && redPos && (
-        <ActionLabel
-          action={currentRedAction}
-          position={redPos}
-          color="#f87171"
-        />
-      )}
+      ))}
       {hoveredNode && (
         <HostTooltip
           node={hoveredNode.node}

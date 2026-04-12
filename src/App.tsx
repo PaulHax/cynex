@@ -25,6 +25,7 @@ import type {
   AnyTrajectoryFile,
   AgentAction,
   AgentActionV2,
+  ActiveAction,
 } from './trajectory/types';
 import { isV2 } from './trajectory/types';
 
@@ -235,6 +236,53 @@ const App = () => {
     );
   }, [trajectory, stepRange]);
 
+  const activeActions: ActiveAction[] = useMemo(() => {
+    if (!trajectory) return [];
+    const step = stepRange.end;
+    if (isV2(trajectory)) {
+      const result: ActiveAction[] = [];
+      for (const agent of [
+        ...trajectory.blue_agents,
+        ...trajectory.red_agents,
+      ]) {
+        const a = trajectory.agent_actions[agent]?.[step];
+        if (a && a.Action !== 'Sleep') {
+          result.push({
+            agent,
+            team: agent.startsWith('blue') ? 'blue' : 'red',
+            Action: a.Action,
+            Status: a.Status,
+            Host: a.Host,
+          });
+        }
+      }
+      return result;
+    }
+    // V1: build from display actions
+    const result: ActiveAction[] = [];
+    const blue = displayBlueActions[step];
+    if (blue && blue.Action !== 'Sleep') {
+      result.push({
+        agent: 'blue',
+        team: 'blue',
+        Action: blue.Action,
+        Status: blue.Status,
+        Host: blue.Host,
+      });
+    }
+    const red = displayRedActions[step];
+    if (red && red.Action !== 'Sleep') {
+      result.push({
+        agent: 'red',
+        team: 'red',
+        Action: red.Action,
+        Status: red.Status,
+        Host: red.Host,
+      });
+    }
+    return result;
+  }, [trajectory, stepRange.end, displayBlueActions, displayRedActions]);
+
   const topology = useNetworkTopology(trajectory);
 
   const hostCount = trajectory
@@ -362,8 +410,7 @@ const App = () => {
         <div className="flex-1 relative bg-slate-950">
           {trajectory && (
             <NetworkGraph
-              blueActions={displayBlueActions}
-              redActions={displayRedActions}
+              activeActions={activeActions}
               movements={movements}
               stepRange={stepRange}
               nodeStates={nodeStates}

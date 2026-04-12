@@ -121,3 +121,11 @@ export type AnyTrajectoryFile = TrajectoryFile | TrajectoryFileV2;
 
 export const isV2 = (t: AnyTrajectoryFile): t is TrajectoryFileV2 =>
   'format_version' in t && t.format_version === '2.0';
+
+export type ActiveAction = {
+  agent: string;
+  team: 'blue' | 'red';
+  Action: string;
+  Status: string;
+  Host: string;
+};
