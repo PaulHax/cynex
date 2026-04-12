@@ -113,8 +113,9 @@ export const extractTopologyV2 = (
     width: 0,
   }));
 
-  const hosts: HostDefinition[] = Object.keys(networkTopology).map(
-    (hostname) => {
+  const hosts: HostDefinition[] = Object.keys(networkTopology)
+    .filter((hostname) => !hostname.endsWith('_router'))
+    .map((hostname) => {
       // Try prefix match first, then fall back to network address match
       let subnetKey = findSubnetForHost(hostname, subnetKeys);
       if (!subnetKey) {
@@ -131,8 +132,7 @@ export const extractTopologyV2 = (
         x: 0,
         y: 0,
       };
-    }
-  );
+    });
 
   // Build edges from NACL connections (deduplicated, undirected)
   const edgeSet = new Set<string>();
