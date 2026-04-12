@@ -347,6 +347,13 @@ const App = () => {
                 onStepRangeChange={setStepRange}
                 agentVisibility={agentVisibility}
                 onAgentVisibilityChange={setAgentVisibility}
+                agentActions={
+                  isV2(trajectory) ? trajectory.agent_actions : undefined
+                }
+                blueAgents={
+                  isV2(trajectory) ? trajectory.blue_agents : undefined
+                }
+                redAgents={isV2(trajectory) ? trajectory.red_agents : undefined}
               />
             </div>
           )}
