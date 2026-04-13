@@ -183,8 +183,8 @@ const App = () => {
     return result;
   }, [trajectory, stepRange.end, blueSet]);
 
-  const greenActiveHosts: Map<string, number> = useMemo(() => {
-    const map = new Map<string, number>();
+  const greenActiveHosts: Map<string, boolean> = useMemo(() => {
+    const map = new Map<string, boolean>();
     if (!trajectory) return map;
     const step = stepRange.end;
     for (const agent of trajectory.greenAgents) {
@@ -193,7 +193,8 @@ const App = () => {
       const resolved = resolveEffectiveAction(actions, step);
       if (resolved && resolved.action.Host) {
         const host = resolved.action.Host;
-        map.set(host, (map.get(host) ?? 0) + 1);
+        const isFailing = resolved.action.Status === 'FALSE';
+        map.set(host, (map.get(host) ?? false) || isFailing);
       }
     }
     return map;

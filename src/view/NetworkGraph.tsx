@@ -32,7 +32,7 @@ import type { HostRole } from '../network/extractTopology';
 
 type NetworkGraphProps = {
   activeActions: ActiveAction[];
-  greenActiveHosts: Map<string, number>;
+  greenActiveHosts: Map<string, boolean>;
   movements: Movement[];
   stepRange: StepRange;
   nodeStates?: Map<string, NodeState>;
@@ -151,15 +151,28 @@ const HOST_ICON_MAPPING: Record<
   },
 };
 
-const GREEN_DOT_ATLAS =
+const GREEN_STATUS_ATLAS =
   'data:image/svg+xml,' +
   encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="7" fill="white"/></svg>'
+    '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="16">' +
+      '<polyline points="3,8 6.5,12 13,4" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<line x1="19" y1="3" x2="29" y2="13" stroke="white" stroke-width="2.5" stroke-linecap="round"/>' +
+      '<line x1="29" y1="3" x2="19" y2="13" stroke="white" stroke-width="2.5" stroke-linecap="round"/>' +
+      '</svg>'
   );
 
-const GREEN_DOT_MAPPING = {
-  dot: {
+const GREEN_STATUS_MAPPING = {
+  check: {
     x: 0,
+    y: 0,
+    width: 16,
+    height: 16,
+    anchorX: 8,
+    anchorY: 8,
+    mask: true,
+  },
+  cross: {
+    x: 16,
     y: 0,
     width: 16,
     height: 16,
@@ -553,9 +566,11 @@ export const NetworkGraph = ({
     return [r, g, b, 255];
   };
 
-  const greenDotData = useMemo(() => {
+  const greenStatusData = useMemo(() => {
     if (greenActiveHosts.size === 0) return [];
-    return allNodes.filter((n) => greenActiveHosts.has(n.id));
+    return allNodes
+      .filter((n) => greenActiveHosts.has(n.id))
+      .map((n) => ({ ...n, failing: greenActiveHosts.get(n.id)! }));
   }, [allNodes, greenActiveHosts]);
 
   const movements = useMemo(
@@ -742,19 +757,20 @@ export const NetworkGraph = ({
     }),
 
     new IconLayer({
-      id: 'green-activity-dots',
-      data: greenDotData,
-      iconAtlas: GREEN_DOT_ATLAS,
-      iconMapping: GREEN_DOT_MAPPING,
-      getIcon: () => 'dot',
+      id: 'green-activity-indicators',
+      data: greenStatusData,
+      iconAtlas: GREEN_STATUS_ATLAS,
+      iconMapping: GREEN_STATUS_MAPPING,
+      getIcon: (d) => (d.failing ? 'cross' : 'check'),
       getPosition: (d) => d.position,
-      getSize: 10,
+      getSize: 14,
       sizeUnits: 'pixels',
-      getColor: [...AGENT_COLORS.green, 255],
+      getColor: (d) => (d.failing ? [239, 68, 68, 255] : [74, 222, 128, 255]),
       getPixelOffset: [0, -2],
       pickable: false,
       updateTriggers: {
-        data: [greenActiveHosts],
+        getIcon: [greenActiveHosts],
+        getColor: [greenActiveHosts],
       },
     }),
   ];
