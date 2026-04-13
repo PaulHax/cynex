@@ -11,8 +11,8 @@ export const AGENT_COLORS = {
 
 export const NODE_STATE_COLORS = {
   clean: [107, 114, 128] as RGBColor,
-  user_access: [251, 191, 36] as RGBColor,
-  root_access: [219, 88, 140] as RGBColor,
+  user_access: [222, 190, 100] as RGBColor,
+  root_access: [205, 130, 155] as RGBColor,
   detected: [245, 158, 11] as RGBColor,
   restored: [16, 185, 129] as RGBColor,
 } as const;
