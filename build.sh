@@ -8,9 +8,10 @@ BASE_URL="https://github.com/$REPO/releases/download/$TAG"
 
 mkdir -p "$DIR"
 
-# Get list of assets from the release
+# Get list of assets from the release (using GitHub API, no gh CLI needed)
 echo "Fetching asset list from '$TAG' release..."
-ASSETS=$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name' 2>/dev/null || true)
+API_URL="https://api.github.com/repos/$REPO/releases/tags/$TAG"
+ASSETS=$(curl -fsSL "$API_URL" | python3 -c "import sys,json; [print(a['name']) for a in json.load(sys.stdin)['assets']]" 2>/dev/null || true)
 
 if [ -z "$ASSETS" ]; then
   echo "Warning: no assets found on release '$TAG'. Building without trajectories."
