@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TAG="trajectories"
+REPO="${GITHUB_REPOSITORY:-PaulHax/cynex}"
+DIR="public/data/trajectories"
+BASE_URL="https://github.com/$REPO/releases/download/$TAG"
+
+mkdir -p "$DIR"
+
+# Get list of assets from the release
+echo "Fetching asset list from '$TAG' release..."
+ASSETS=$(gh release view "$TAG" --repo "$REPO" --json assets --jq '.assets[].name' 2>/dev/null || true)
+
+if [ -z "$ASSETS" ]; then
+  echo "Warning: no assets found on release '$TAG'. Building without trajectories."
+  exit 0
+fi
+
+# Download each asset
+for name in $ASSETS; do
+  echo "Downloading $name..."
+  curl -fsSL -L "$BASE_URL/$name" -o "$DIR/$name"
+done
+
+echo "Downloaded $(echo "$ASSETS" | wc -l) trajectory file(s) to $DIR/"
