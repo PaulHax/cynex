@@ -19,6 +19,7 @@ import { computeNodeStates } from './trajectory/nodeState';
 import { getMovementsInRange } from './trajectory/computeTrails';
 import { useNetworkTopology } from './network/useNetworkTopology';
 import type { Trajectory, ActiveAction } from './trajectory/types';
+import { resolveEffectiveAction } from './trajectory/types';
 
 export type AgentVisibility = { blue: boolean; red: boolean };
 
@@ -165,14 +166,17 @@ const App = () => {
     const step = stepRange.end;
     const result: ActiveAction[] = [];
     for (const agent of [...trajectory.blueAgents, ...trajectory.redAgents]) {
-      const a = trajectory.agentActions[agent]?.[step];
-      if (a && a.Action !== 'Sleep') {
+      const actions = trajectory.agentActions[agent];
+      if (!actions) continue;
+      const resolved = resolveEffectiveAction(actions, step);
+      if (resolved) {
         result.push({
           agent,
           team: blueSet.has(agent) ? 'blue' : 'red',
-          Action: a.Action,
-          Status: a.Status,
-          Host: a.Host,
+          Action: resolved.action.Action,
+          Status: resolved.action.Status,
+          Host: resolved.action.Host,
+          inProgress: resolved.inProgress,
         });
       }
     }

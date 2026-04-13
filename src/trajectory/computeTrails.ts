@@ -23,21 +23,30 @@ export const getMovementsInRange = (
     if (!actions) continue;
     const team: 'blue' | 'red' = blueSet.has(agentName) ? 'blue' : 'red';
 
-    for (let step = range.start; step <= range.end; step++) {
-      const prevStep = step - 1;
-      if (prevStep < 0) continue;
+    // Track last non-empty host to handle gaps (e.g. CC4 blue agents
+    // have empty Host on alternating steps).
+    let lastHost = '';
+    const startLookback = Math.max(0, range.start - 1);
+    for (let i = startLookback; i >= 0; i--) {
+      if (actions[i]?.Host) {
+        lastHost = actions[i].Host;
+        break;
+      }
+    }
 
-      const prev = actions[prevStep];
-      const curr = actions[step];
-      if (prev?.Host && curr?.Host && prev.Host !== curr.Host) {
+    for (let step = range.start; step <= range.end; step++) {
+      const host = actions[step]?.Host;
+      if (!host) continue;
+      if (lastHost && host !== lastHost) {
         movements.push({
-          fromHost: prev.Host,
-          toHost: curr.Host,
+          fromHost: lastHost,
+          toHost: host,
           agent: agentName,
           team,
           step,
         });
       }
+      lastHost = host;
     }
   }
 

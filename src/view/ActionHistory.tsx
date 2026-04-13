@@ -1,5 +1,6 @@
 import { useEffect, useRef, memo, useCallback } from 'react';
 import type { AgentAction } from '../trajectory/types';
+import { resolveEffectiveAction } from '../trajectory/types';
 import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
 
@@ -59,19 +60,23 @@ const shortAgentName = (name: string): string => {
   return name;
 };
 
-type AgentEntry = { agent: string; action: AgentAction };
+type AgentEntry = { agent: string; action: AgentAction; inProgress: boolean };
 
 const AgentActionLine = memo(
   ({
     agent,
     action,
     showLabel,
+    inProgress,
   }: {
     agent: string;
     action: AgentAction;
     showLabel: boolean;
+    inProgress: boolean;
   }) => (
-    <div className="flex items-start gap-1 min-w-0">
+    <div
+      className={`flex items-start gap-1 min-w-0 ${inProgress ? 'opacity-60' : ''}`}
+    >
       <StatusIndicator status={action.Status} />
       {showLabel && (
         <span className="text-slate-400 shrink-0">{shortAgentName(agent)}</span>
@@ -79,6 +84,7 @@ const AgentActionLine = memo(
       <div className="min-w-0">
         <span className="text-slate-200 font-medium text-xs truncate">
           {action.Action}
+          {inProgress && <span className="text-slate-400">&hellip;</span>}
         </span>
         {action.Host && (
           <div className="text-slate-300 text-xs truncate">{action.Host}</div>
@@ -134,6 +140,7 @@ const ActionRow = memo(
                 agent={e.agent}
                 action={e.action}
                 showLabel={showAgentLabels}
+                inProgress={e.inProgress}
               />
             ))
           ) : (
@@ -148,6 +155,7 @@ const ActionRow = memo(
                 agent={e.agent}
                 action={e.action}
                 showLabel={showAgentLabels}
+                inProgress={e.inProgress}
               />
             ))
           ) : (
@@ -210,9 +218,15 @@ export const ActionHistory = ({
   const getEntries = (agents: string[], step: number): AgentEntry[] => {
     const entries: AgentEntry[] = [];
     for (const agent of agents) {
-      const a = agentActions[agent]?.[step];
-      if (a && a.Action !== 'Sleep') {
-        entries.push({ agent, action: a });
+      const actions = agentActions[agent];
+      if (!actions) continue;
+      const resolved = resolveEffectiveAction(actions, step);
+      if (resolved) {
+        entries.push({
+          agent,
+          action: resolved.action,
+          inProgress: resolved.inProgress,
+        });
       }
     }
     return entries;

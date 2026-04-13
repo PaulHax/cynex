@@ -102,4 +102,35 @@ export type ActiveAction = {
   Action: string;
   Status: string;
   Host: string;
+  inProgress?: boolean;
+};
+
+/**
+ * Resolve the effective action for an agent at a given step.
+ * - Real action (non-Sleep): returns it directly.
+ * - Sleep/IN_PROGRESS (action-duration wait): walks back to the originating
+ *   action and returns it with inProgress=true.
+ * - Sleep/UNKNOWN (deliberate sleep): returns null.
+ */
+export const resolveEffectiveAction = (
+  actions: AgentAction[],
+  step: number
+): { action: AgentAction; inProgress: boolean } | null => {
+  const a = actions[step];
+  if (!a) return null;
+
+  if (a.Action !== 'Sleep') return { action: a, inProgress: false };
+
+  // Deliberate sleep
+  if (a.Status !== 'IN_PROGRESS') return null;
+
+  // Walk back to find the originating action
+  for (let i = step - 1; i >= 0; i--) {
+    const prev = actions[i];
+    if (prev && prev.Action !== 'Sleep') {
+      return { action: prev, inProgress: true };
+    }
+  }
+
+  return null;
 };

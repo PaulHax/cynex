@@ -279,7 +279,10 @@ const ActionLabel = ({
       <span style={{ color, fontSize: '11px' }}>
         {shortAgentName(active.agent)}
       </span>
-      <span style={{ color: '#e2e8f0' }}>{active.Action}</span>
+      <span style={{ color: '#e2e8f0', opacity: active.inProgress ? 0.6 : 1 }}>
+        {active.Action}
+        {active.inProgress && '\u2026'}
+      </span>
     </div>
   );
 };
