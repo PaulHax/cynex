@@ -15,50 +15,15 @@ import {
   loadTrajectory,
   parseTrajectoryFile,
 } from './trajectory/loader';
-import { computeNodeStates, computeNodeStatesV2 } from './trajectory/nodeState';
-import {
-  getMovementsInRange,
-  getMovementsInRangeV2,
-} from './trajectory/computeTrails';
+import { computeNodeStates } from './trajectory/nodeState';
+import { getMovementsInRange } from './trajectory/computeTrails';
 import { useNetworkTopology } from './network/useNetworkTopology';
-import type {
-  AnyTrajectoryFile,
-  AgentAction,
-  AgentActionV2,
-  ActiveAction,
-} from './trajectory/types';
-import { isV2 } from './trajectory/types';
+import type { Trajectory, ActiveAction } from './trajectory/types';
 
 export type AgentVisibility = { blue: boolean; red: boolean };
 
-/** Pick the most interesting non-Sleep action per step for a team */
-const pickRepresentativeActions = (
-  agentActions: Record<string, AgentActionV2[]>,
-  agentNames: string[],
-  totalSteps: number
-): AgentAction[] => {
-  const result: AgentAction[] = [];
-  for (let step = 0; step < totalSteps; step++) {
-    let best: AgentActionV2 | null = null;
-    for (const name of agentNames) {
-      const a = agentActions[name]?.[step];
-      if (!a || a.Action === 'Sleep') continue;
-      if (!best || (a.Status === 'TRUE' && best.Status !== 'TRUE')) {
-        best = a;
-      }
-    }
-    const action = best ?? agentActions[agentNames[0]]?.[step];
-    result.push({
-      Action: action?.Action ?? 'Sleep',
-      Status: action?.Status === 'TRUE' ? 'TRUE' : 'FALSE',
-      Host: action?.Host ?? '',
-    });
-  }
-  return result;
-};
-
 const App = () => {
-  const [trajectory, setTrajectory] = useState<AnyTrajectoryFile | null>(null);
+  const [trajectory, setTrajectory] = useState<Trajectory | null>(null);
   const [trajectoryName, setTrajectoryName] = useState<string | null>(null);
   const [stepRange, setStepRange] = useState<StepRange>({ start: 0, end: 0 });
   const [initialLoading, setInitialLoading] = useState(true);
@@ -74,7 +39,6 @@ const App = () => {
 
   useEffect(() => {
     const loadInitialTrajectory = async () => {
-      // Check for URL parameter first (e.g., ?file=/path/to/trajectory.json)
       const params = new URLSearchParams(window.location.search);
       const fileParam = params.get('file');
 
@@ -90,7 +54,6 @@ const App = () => {
         }
       }
 
-      // Fall back to manifest
       const manifest = await loadTrajectoryManifest();
       if (manifest.files.length > 0) {
         const firstFile = manifest.files[0];
@@ -108,34 +71,7 @@ const App = () => {
     loadInitialTrajectory();
   }, []);
 
-  const totalSteps = trajectory
-    ? isV2(trajectory)
-      ? trajectory.total_steps
-      : trajectory.blue_actions.length
-    : 0;
-
-  // For V2: compute representative single blue/red action per step
-  const { displayBlueActions, displayRedActions } = useMemo(() => {
-    if (!trajectory) return { displayBlueActions: [], displayRedActions: [] };
-    if (isV2(trajectory)) {
-      return {
-        displayBlueActions: pickRepresentativeActions(
-          trajectory.agent_actions,
-          trajectory.blue_agents,
-          trajectory.total_steps
-        ),
-        displayRedActions: pickRepresentativeActions(
-          trajectory.agent_actions,
-          trajectory.red_agents,
-          trajectory.total_steps
-        ),
-      };
-    }
-    return {
-      displayBlueActions: trajectory.blue_actions,
-      displayRedActions: trajectory.red_actions,
-    };
-  }, [trajectory]);
+  const totalSteps = trajectory?.totalSteps ?? 0;
 
   useEffect(() => {
     if (!isPlaying || totalSteps === 0) return;
@@ -159,16 +95,13 @@ const App = () => {
     setIsPlaying((prev) => !prev);
   }, [stepRange.end, totalSteps]);
 
-  const handleTrajectoryLoad = useCallback(
-    (data: AnyTrajectoryFile, name: string) => {
-      setTrajectory(data);
-      setTrajectoryName(name);
-      setStepRange({ start: 0, end: 0 });
-      setDropError(null);
-      setIsPlaying(false);
-    },
-    []
-  );
+  const handleTrajectoryLoad = useCallback((data: Trajectory, name: string) => {
+    setTrajectory(data);
+    setTrajectoryName(name);
+    setStepRange({ start: 0, end: 0 });
+    setDropError(null);
+    setIsPlaying(false);
+  }, []);
 
   const handleDragOver = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -209,103 +142,63 @@ const App = () => {
 
   const nodeStates = useMemo(() => {
     if (!trajectory) return undefined;
-    if (isV2(trajectory)) {
-      return computeNodeStatesV2(trajectory.step_states, stepRange.end);
-    }
-    return computeNodeStates(
-      trajectory.blue_actions,
-      trajectory.red_actions,
-      stepRange.end
-    );
+    return computeNodeStates(trajectory.stepStates, stepRange.end);
   }, [trajectory, stepRange.end]);
 
   const movements = useMemo(() => {
     if (!trajectory) return [];
-    if (isV2(trajectory)) {
-      return getMovementsInRangeV2(
-        trajectory.agent_actions,
-        trajectory.blue_agents,
-        trajectory.red_agents,
-        stepRange
-      );
-    }
     return getMovementsInRange(
-      trajectory.blue_actions,
-      trajectory.red_actions,
+      trajectory.agentActions,
+      trajectory.blueAgents,
+      trajectory.redAgents,
       stepRange
     );
   }, [trajectory, stepRange]);
 
+  const blueSet = useMemo(
+    () => new Set(trajectory?.blueAgents ?? []),
+    [trajectory]
+  );
+
   const activeActions: ActiveAction[] = useMemo(() => {
     if (!trajectory) return [];
     const step = stepRange.end;
-    if (isV2(trajectory)) {
-      const result: ActiveAction[] = [];
-      for (const agent of [
-        ...trajectory.blue_agents,
-        ...trajectory.red_agents,
-      ]) {
-        const a = trajectory.agent_actions[agent]?.[step];
-        if (a && a.Action !== 'Sleep') {
-          result.push({
-            agent,
-            team: agent.startsWith('blue') ? 'blue' : 'red',
-            Action: a.Action,
-            Status: a.Status,
-            Host: a.Host,
-          });
-        }
-      }
-      return result;
-    }
-    // V1: build from display actions
     const result: ActiveAction[] = [];
-    const blue = displayBlueActions[step];
-    if (blue && blue.Action !== 'Sleep') {
-      result.push({
-        agent: 'blue',
-        team: 'blue',
-        Action: blue.Action,
-        Status: blue.Status,
-        Host: blue.Host,
-      });
-    }
-    const red = displayRedActions[step];
-    if (red && red.Action !== 'Sleep') {
-      result.push({
-        agent: 'red',
-        team: 'red',
-        Action: red.Action,
-        Status: red.Status,
-        Host: red.Host,
-      });
+    for (const agent of [...trajectory.blueAgents, ...trajectory.redAgents]) {
+      const a = trajectory.agentActions[agent]?.[step];
+      if (a && a.Action !== 'Sleep') {
+        result.push({
+          agent,
+          team: blueSet.has(agent) ? 'blue' : 'red',
+          Action: a.Action,
+          Status: a.Status,
+          Host: a.Host,
+        });
+      }
     }
     return result;
-  }, [trajectory, stepRange.end, displayBlueActions, displayRedActions]);
+  }, [trajectory, stepRange.end, blueSet]);
 
   const topology = useNetworkTopology(trajectory);
 
   const hostCount = trajectory
-    ? Object.keys(trajectory.network_topology).length
+    ? Object.keys(trajectory.networkTopology).length
     : 0;
 
+  // Data-driven header: single-agent matchups get "A vs B", multi-agent gets challenge name
   const headerText = trajectory
-    ? isV2(trajectory)
-      ? `CC4 — ${hostCount} hosts — Episode ${trajectory.episode}`
-      : `${trajectory.blue_agent_name} vs ${trajectory.red_agent_name} — Episode ${trajectory.episode} — ${hostCount} hosts`
+    ? trajectory.blueAgents.length === 1 && trajectory.redAgents.length === 1
+      ? `${trajectory.blueAgents[0]} vs ${trajectory.redAgents[0]} — Episode ${trajectory.episode} — ${hostCount} hosts`
+      : `${trajectory.challenge} — ${hostCount} hosts — Episode ${trajectory.episode}`
     : null;
 
-  const currentScore =
-    trajectory && !isV2(trajectory)
-      ? trajectory.metric_scores[stepRange.end]
-      : undefined;
+  const currentStepState = trajectory
+    ? trajectory.stepStates[
+        Math.min(stepRange.end, trajectory.stepStates.length - 1)
+      ]
+    : undefined;
 
-  const currentStepState =
-    trajectory && isV2(trajectory)
-      ? trajectory.step_states[
-          Math.min(stepRange.end, trajectory.step_states.length - 1)
-        ]
-      : undefined;
+  const currentScore = trajectory?.metricScores[stepRange.end];
 
   if (initialLoading) {
     return (
@@ -387,20 +280,14 @@ const App = () => {
               <ActionPanel
                 stepRange={stepRange}
                 totalSteps={totalSteps}
-                blueActions={displayBlueActions}
-                redActions={displayRedActions}
                 score={currentScore}
                 stepState={currentStepState}
                 onStepRangeChange={setStepRange}
                 agentVisibility={agentVisibility}
                 onAgentVisibilityChange={setAgentVisibility}
-                agentActions={
-                  isV2(trajectory) ? trajectory.agent_actions : undefined
-                }
-                blueAgents={
-                  isV2(trajectory) ? trajectory.blue_agents : undefined
-                }
-                redAgents={isV2(trajectory) ? trajectory.red_agents : undefined}
+                agentActions={trajectory.agentActions}
+                blueAgents={trajectory.blueAgents}
+                redAgents={trajectory.redAgents}
               />
             </div>
           )}

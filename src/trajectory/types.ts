@@ -1,13 +1,7 @@
 export type AgentAction = {
-  Action: string;
-  Status: 'TRUE' | 'FALSE';
-  Host: string;
-};
-
-export type AgentActionV2 = {
   step: number;
   Action: string;
-  Status: string; // TRUE, FALSE, UNKNOWN, IN_PROGRESS
+  Status: string;
   Host: string;
   Params: Record<string, unknown>;
 };
@@ -52,7 +46,7 @@ export type Group = {
 export type UserInfo = {
   Username: string;
   Password?: string;
-  Groups: Group[];
+  Groups?: Group[];
 };
 
 export type SystemInfo = {
@@ -71,17 +65,6 @@ export type HostInfo = {
   'System info': SystemInfo;
 };
 
-export type TrajectoryFile = {
-  blue_agent_name: string;
-  red_agent_name: string;
-  episode: number;
-  experiment_time: string;
-  network_topology: Record<string, HostInfo>;
-  blue_actions: AgentAction[];
-  red_actions: AgentAction[];
-  metric_scores: MetricScore[];
-};
-
 export type SubnetMetadata = {
   label: string;
   network_address: string;
@@ -97,32 +80,21 @@ export type StepState = {
   cumulative_reward: Record<string, number>;
 };
 
-export type TrajectoryFileV2 = {
-  format_version: '2.0';
+export type Trajectory = {
   challenge: string;
   episode: number;
-  seed: number;
-  total_steps: number;
-  experiment_time: string;
-  blue_agents: string[];
-  red_agents: string[];
-  green_agents: string[];
-  network_topology: Record<string, HostInfo>;
-  subnet_metadata: Record<string, SubnetMetadata>;
-  agent_actions: Record<string, AgentActionV2[]>;
-  step_states: StepState[];
-  metric_scores: MetricScore[];
-  // Backward-compat flat arrays (interleaved across agents)
-  blue_agent_name: string;
-  red_agent_name: string;
-  blue_actions: AgentActionV2[];
-  red_actions: AgentActionV2[];
+  experimentTime: string;
+  totalSteps: number;
+  blueAgents: string[];
+  redAgents: string[];
+  greenAgents: string[];
+  networkTopology: Record<string, HostInfo>;
+  subnetMetadata: Record<string, SubnetMetadata>;
+  agentActions: Record<string, AgentAction[]>;
+  stepStates: StepState[];
+  metricScores: MetricScore[];
+  layoutDirection: 'RIGHT' | 'DOWN';
 };
-
-export type AnyTrajectoryFile = TrajectoryFile | TrajectoryFileV2;
-
-export const isV2 = (t: AnyTrajectoryFile): t is TrajectoryFileV2 =>
-  'format_version' in t && t.format_version === '2.0';
 
 export type ActiveAction = {
   agent: string;

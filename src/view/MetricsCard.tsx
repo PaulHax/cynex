@@ -8,8 +8,10 @@ type MetricsCardProps = {
 export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
   if (!score && !stepState) return null;
 
-  // V2: show mission phase + reward score
-  if (!score && stepState) {
+  // Data-driven: show reward metrics when step state has reward data
+  const hasRewards = stepState && Object.keys(stepState.rewards).length > 0;
+
+  if (hasRewards) {
     const rewardValues = Object.values(stepState.rewards);
     const stepReward = rewardValues.length > 0 ? rewardValues[0] : 0;
     const cumulativeValues = Object.values(stepState.cumulative_reward);

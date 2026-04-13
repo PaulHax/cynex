@@ -25,7 +25,7 @@ import type { ActiveAction } from '../trajectory/types';
 import type { NodeState } from '../trajectory/nodeState';
 import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
-import { type Movement } from '../trajectory/computeTrails';
+import type { Movement } from '../trajectory/computeTrails';
 
 import hostIconAtlas from '../assets/host-role-atlas.svg';
 import type { HostRole } from '../network/extractTopology';
@@ -170,9 +170,6 @@ const AGED_COLORS: Record<'blue' | 'red', RGBColor> = {
   red: [165, 105, 100], // muted red
 };
 
-const getAgentTeam = (agent: string): 'blue' | 'red' =>
-  agent.startsWith('blue') || agent === 'blue' ? 'blue' : 'red';
-
 const lerpColor = (
   from: RGBColor,
   to: RGBColor,
@@ -193,9 +190,8 @@ const createTrailPath = (
   const toPos = nodePositions.get(movement.toHost);
   if (!fromPos || !toPos) return null;
 
-  const team = getAgentTeam(movement.agent);
-  const freshColor = AGENT_COLORS[team];
-  const agedColor = AGED_COLORS[team];
+  const freshColor = AGENT_COLORS[movement.team];
+  const agedColor = AGED_COLORS[movement.team];
   const baseColor = lerpColor(agedColor, freshColor, ageFactor);
 
   const dx = toPos[0] - fromPos[0];
@@ -535,7 +531,7 @@ export const NetworkGraph = ({
   };
 
   const movements = useMemo(
-    () => allMovements.filter((m) => agentVisibility[getAgentTeam(m.agent)]),
+    () => allMovements.filter((m) => agentVisibility[m.team]),
     [allMovements, agentVisibility]
   );
 

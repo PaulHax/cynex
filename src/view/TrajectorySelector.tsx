@@ -4,10 +4,10 @@ import {
   loadTrajectory,
   parseTrajectoryFile,
 } from '../trajectory/loader';
-import type { AnyTrajectoryFile } from '../trajectory/types';
+import type { Trajectory } from '../trajectory/types';
 
 type TrajectorySelectorProps = {
-  onTrajectoryLoad: (trajectory: AnyTrajectoryFile, name: string) => void;
+  onTrajectoryLoad: (trajectory: Trajectory, name: string) => void;
   currentName: string | null;
   loading?: boolean;
   error?: string | null;
