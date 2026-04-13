@@ -32,6 +32,7 @@ import type { HostRole } from '../network/extractTopology';
 
 type NetworkGraphProps = {
   activeActions: ActiveAction[];
+  greenActiveHosts: Map<string, number>;
   movements: Movement[];
   stepRange: StepRange;
   nodeStates?: Map<string, NodeState>;
@@ -146,6 +147,24 @@ const HOST_ICON_MAPPING: Record<
     height: 32,
     anchorX: 16,
     anchorY: 16,
+    mask: true,
+  },
+};
+
+const GREEN_DOT_ATLAS =
+  'data:image/svg+xml,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="7" fill="white"/></svg>'
+  );
+
+const GREEN_DOT_MAPPING = {
+  dot: {
+    x: 0,
+    y: 0,
+    width: 16,
+    height: 16,
+    anchorX: 8,
+    anchorY: 8,
     mask: true,
   },
 };
@@ -322,6 +341,7 @@ const HostTooltip = ({
 
 export const NetworkGraph = ({
   activeActions,
+  greenActiveHosts,
   movements: allMovements,
   stepRange,
   nodeStates,
@@ -533,6 +553,11 @@ export const NetworkGraph = ({
     return [r, g, b, 255];
   };
 
+  const greenDotData = useMemo(() => {
+    if (greenActiveHosts.size === 0) return [];
+    return allNodes.filter((n) => greenActiveHosts.has(n.id));
+  }, [allNodes, greenActiveHosts]);
+
   const movements = useMemo(
     () => allMovements.filter((m) => agentVisibility[m.team]),
     [allMovements, agentVisibility]
@@ -713,6 +738,23 @@ export const NetworkGraph = ({
       updateTriggers: {
         getIcon: [topology],
         getColor: [nodeStates],
+      },
+    }),
+
+    new IconLayer({
+      id: 'green-activity-dots',
+      data: greenDotData,
+      iconAtlas: GREEN_DOT_ATLAS,
+      iconMapping: GREEN_DOT_MAPPING,
+      getIcon: () => 'dot',
+      getPosition: (d) => d.position,
+      getSize: 10,
+      sizeUnits: 'pixels',
+      getColor: [...AGENT_COLORS.green, 255],
+      getPixelOffset: [0, -2],
+      pickable: false,
+      updateTriggers: {
+        data: [greenActiveHosts],
       },
     }),
   ];

@@ -183,6 +183,22 @@ const App = () => {
     return result;
   }, [trajectory, stepRange.end, blueSet]);
 
+  const greenActiveHosts: Map<string, number> = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!trajectory) return map;
+    const step = stepRange.end;
+    for (const agent of trajectory.greenAgents) {
+      const actions = trajectory.agentActions[agent];
+      if (!actions) continue;
+      const resolved = resolveEffectiveAction(actions, step);
+      if (resolved && resolved.action.Host) {
+        const host = resolved.action.Host;
+        map.set(host, (map.get(host) ?? 0) + 1);
+      }
+    }
+    return map;
+  }, [trajectory, stepRange.end]);
+
   const topology = useNetworkTopology(trajectory);
 
   const hostCount = trajectory
@@ -301,6 +317,7 @@ const App = () => {
           {trajectory && (
             <NetworkGraph
               activeActions={activeActions}
+              greenActiveHosts={greenActiveHosts}
               movements={movements}
               stepRange={stepRange}
               nodeStates={nodeStates}

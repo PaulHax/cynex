@@ -6,6 +6,7 @@ export type RGBColor = [number, number, number];
 export const AGENT_COLORS = {
   blue: [59, 130, 246] as RGBColor,
   red: [239, 68, 68] as RGBColor,
+  green: [34, 197, 94] as RGBColor,
 } as const;
 
 export const NODE_STATE_COLORS = {
