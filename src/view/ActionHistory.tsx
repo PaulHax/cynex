@@ -1,12 +1,11 @@
 import { useEffect, useRef, memo, useCallback } from 'react';
 import type { AgentAction } from '../trajectory/types';
 import { resolveEffectiveAction } from '../trajectory/types';
-import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
 
 type ActionHistoryProps = {
-  stepRange: StepRange;
-  onStepRangeChange: (range: StepRange) => void;
+  currentStep: number;
+  onStepChange: (step: number) => void;
   agentVisibility: AgentVisibility;
   onAgentVisibilityChange: (visibility: AgentVisibility) => void;
   agentActions: Record<string, AgentAction[]>;
@@ -94,14 +93,12 @@ const AgentActionLine = memo(
   )
 );
 
-type RowState = 'end' | 'inRange' | 'outOfRange';
-
 const ActionRow = memo(
   ({
     step,
     blueEntries,
     redEntries,
-    rowState,
+    isCurrent,
     onStepClick,
     showAgentLabels,
     rowRef,
@@ -109,17 +106,14 @@ const ActionRow = memo(
     step: number;
     blueEntries: AgentEntry[];
     redEntries: AgentEntry[];
-    rowState: RowState;
+    isCurrent: boolean;
     onStepClick: (step: number) => void;
     showAgentLabels: boolean;
     rowRef?: React.RefObject<HTMLDivElement | null>;
   }) => {
-    const className =
-      rowState === 'end'
-        ? 'bg-slate-600/80 border-l-2 border-blue-400'
-        : rowState === 'inRange'
-          ? 'bg-slate-700/60 border-l-2 border-slate-500'
-          : 'opacity-70 hover:opacity-100 hover:bg-slate-700/50';
+    const className = isCurrent
+      ? 'bg-slate-600/80 border-l-2 border-blue-400'
+      : 'opacity-70 hover:opacity-100 hover:bg-slate-700/50';
 
     const handleClick = useCallback(() => {
       onStepClick(step);
@@ -168,8 +162,8 @@ const ActionRow = memo(
 );
 
 export const ActionHistory = ({
-  stepRange,
-  onStepRangeChange,
+  currentStep,
+  onStepChange,
   agentVisibility,
   onAgentVisibilityChange,
   agentActions,
@@ -179,41 +173,22 @@ export const ActionHistory = ({
 }: ActionHistoryProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentRowRef = useRef<HTMLDivElement>(null);
-  const stepRangeRef = useRef(stepRange);
-  const onStepRangeChangeRef = useRef(onStepRangeChange);
 
-  // Show agent name labels when any team has multiple agents
   const showAgentLabels = blueAgents.length > 1 || redAgents.length > 1;
-
-  useEffect(() => {
-    stepRangeRef.current = stepRange;
-  }, [stepRange]);
-
-  useEffect(() => {
-    onStepRangeChangeRef.current = onStepRangeChange;
-  }, [onStepRangeChange]);
 
   useEffect(() => {
     currentRowRef.current?.scrollIntoView({
       behavior: 'smooth',
       block: 'nearest',
     });
-  }, [stepRange.end]);
+  }, [currentStep]);
 
-  const handleStepClick = useCallback((step: number) => {
-    const currentRange = stepRangeRef.current;
-    if (step < currentRange.start) {
-      onStepRangeChangeRef.current({ start: step, end: step });
-    } else {
-      onStepRangeChangeRef.current({ ...currentRange, end: step });
-    }
-  }, []);
-
-  const getRowState = (step: number): RowState => {
-    if (step === stepRange.end) return 'end';
-    if (step >= stepRange.start && step <= stepRange.end) return 'inRange';
-    return 'outOfRange';
-  };
+  const handleStepClick = useCallback(
+    (step: number) => {
+      onStepChange(step);
+    },
+    [onStepChange]
+  );
 
   const getEntries = (agents: string[], step: number): AgentEntry[] => {
     const entries: AgentEntry[] = [];
@@ -280,10 +255,10 @@ export const ActionHistory = ({
             step={step}
             blueEntries={getEntries(blueAgents, step)}
             redEntries={getEntries(redAgents, step)}
-            rowState={getRowState(step)}
+            isCurrent={step === currentStep}
             onStepClick={handleStepClick}
             showAgentLabels={showAgentLabels}
-            rowRef={step === stepRange.end ? currentRowRef : undefined}
+            rowRef={step === currentStep ? currentRowRef : undefined}
           />
         ))}
       </div>

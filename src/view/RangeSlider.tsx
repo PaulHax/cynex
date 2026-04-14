@@ -5,26 +5,16 @@ export type StepRange = {
   end: number;
 };
 
-type RangeSliderProps = {
+type StepSliderProps = {
   min: number;
   max: number;
-  value: StepRange;
-  onChange: (range: StepRange) => void;
+  value: number;
+  onChange: (step: number) => void;
 };
 
-export const RangeSlider = ({
-  min,
-  max,
-  value,
-  onChange,
-}: RangeSliderProps) => {
+export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
   const trackRef = useRef<HTMLDivElement>(null);
-  const draggingRef = useRef<'start' | 'end' | 'center' | null>(null);
-  const dragStartRef = useRef<{
-    clientX: number;
-    start: number;
-    end: number;
-  } | null>(null);
+  const draggingRef = useRef(false);
 
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
@@ -52,90 +42,31 @@ export const RangeSlider = ({
     (e: React.MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.dataset.thumb) return;
-
-      const clickedValue = getPositionFromEvent(e.clientX);
-      const current = valueRef.current;
-      if (clickedValue < current.start) {
-        onChangeRef.current({ start: clickedValue, end: clickedValue });
-      } else {
-        onChangeRef.current({ ...current, end: clickedValue });
-      }
+      onChangeRef.current(getPositionFromEvent(e.clientX));
     },
     [getPositionFromEvent]
   );
 
-  const handlePointerDown = useCallback(
-    (thumb: 'start' | 'end') => (e: React.PointerEvent) => {
-      e.stopPropagation();
-      e.currentTarget.setPointerCapture(e.pointerId);
-      draggingRef.current = thumb;
-    },
-    []
-  );
-
-  const handleCenterPointerDown = useCallback((e: React.PointerEvent) => {
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
-    dragStartRef.current = {
-      clientX: e.clientX,
-      start: valueRef.current.start,
-      end: valueRef.current.end,
-    };
-    draggingRef.current = 'center';
+    draggingRef.current = true;
   }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      const currentDragging = draggingRef.current;
-      if (!currentDragging) return;
-      const current = valueRef.current;
-
-      if (currentDragging === 'center') {
-        if (!dragStartRef.current || !trackRef.current) return;
-        const rect = trackRef.current.getBoundingClientRect();
-        const pixelDelta = e.clientX - dragStartRef.current.clientX;
-        const valueDelta = Math.round((pixelDelta / rect.width) * (max - min));
-        const rangeWidth =
-          dragStartRef.current.end - dragStartRef.current.start;
-
-        let newStart = dragStartRef.current.start + valueDelta;
-        let newEnd = dragStartRef.current.end + valueDelta;
-
-        if (newStart < min) {
-          newStart = min;
-          newEnd = min + rangeWidth;
-        }
-        if (newEnd > max) {
-          newEnd = max;
-          newStart = max - rangeWidth;
-        }
-
-        onChangeRef.current({ start: newStart, end: newEnd });
-        return;
-      }
-
-      const newValue = getPositionFromEvent(e.clientX);
-      if (currentDragging === 'start') {
-        const clampedStart = Math.min(newValue, current.end);
-        onChangeRef.current({ ...current, start: clampedStart });
-      } else {
-        if (newValue < current.start) {
-          onChangeRef.current({ start: newValue, end: newValue });
-        } else {
-          onChangeRef.current({ ...current, end: newValue });
-        }
-      }
+      if (!draggingRef.current) return;
+      onChangeRef.current(getPositionFromEvent(e.clientX));
     },
-    [getPositionFromEvent, min, max]
+    [getPositionFromEvent]
   );
 
   const handlePointerUp = useCallback(() => {
-    draggingRef.current = null;
+    draggingRef.current = false;
   }, []);
 
   const range = max - min || 1;
-  const startPercent = ((value.start - min) / range) * 100;
-  const endPercent = ((value.end - min) / range) * 100;
+  const percent = ((value - min) / range) * 100;
 
   return (
     <div
@@ -144,35 +75,17 @@ export const RangeSlider = ({
       className="relative h-3 bg-slate-700 rounded-lg cursor-pointer"
     >
       <div
-        data-thumb="center"
-        onPointerDown={handleCenterPointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        className="absolute top-1/2 -translate-y-1/2 h-5 bg-blue-500 hover:bg-blue-400 rounded cursor-grab active:cursor-grabbing touch-none"
-        style={{
-          left: `${startPercent}%`,
-          width: `${endPercent - startPercent}%`,
-        }}
+        className="absolute top-0 left-0 h-full bg-blue-500/30 rounded-lg pointer-events-none"
+        style={{ width: `${percent}%` }}
       />
       <div
-        data-thumb="start"
-        onPointerDown={handlePointerDown('start')}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        className="absolute top-1/2 w-5 h-5 bg-slate-400 hover:bg-slate-300 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
-        style={{
-          left: `${startPercent}%`,
-          transform: 'translateX(-50%) translateY(-50%)',
-        }}
-      />
-      <div
-        data-thumb="end"
-        onPointerDown={handlePointerDown('end')}
+        data-thumb="step"
+        onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         className="absolute top-1/2 w-5 h-5 bg-blue-300 hover:bg-blue-200 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
         style={{
-          left: `${endPercent}%`,
+          left: `${percent}%`,
           transform: 'translateX(-50%) translateY(-50%)',
         }}
       />

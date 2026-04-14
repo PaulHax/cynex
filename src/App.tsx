@@ -26,7 +26,8 @@ export type AgentVisibility = { blue: boolean; red: boolean };
 const App = () => {
   const [trajectory, setTrajectory] = useState<Trajectory | null>(null);
   const [trajectoryName, setTrajectoryName] = useState<string | null>(null);
-  const [stepRange, setStepRange] = useState<StepRange>({ start: 0, end: 0 });
+  const [currentStep, setCurrentStep] = useState(0);
+  const [trailLength, setTrailLength] = useState(10);
   const [initialLoading, setInitialLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
@@ -37,6 +38,14 @@ const App = () => {
     blue: true,
     red: true,
   });
+
+  const stepRange: StepRange = useMemo(
+    () => ({
+      start: Math.max(0, currentStep - trailLength),
+      end: currentStep,
+    }),
+    [currentStep, trailLength]
+  );
 
   useEffect(() => {
     const loadInitialTrajectory = async () => {
@@ -78,13 +87,13 @@ const App = () => {
     if (!isPlaying || totalSteps === 0) return;
 
     const interval = setInterval(() => {
-      setStepRange((prev) => {
-        const nextEnd = prev.end + 1;
-        if (nextEnd >= totalSteps) {
+      setCurrentStep((prev) => {
+        const next = prev + 1;
+        if (next >= totalSteps) {
           setIsPlaying(false);
           return prev;
         }
-        return { ...prev, end: nextEnd };
+        return next;
       });
     }, 1000);
 
@@ -92,14 +101,14 @@ const App = () => {
   }, [isPlaying, totalSteps]);
 
   const handlePlayToggle = useCallback(() => {
-    if (stepRange.end >= totalSteps - 1) return;
+    if (currentStep >= totalSteps - 1) return;
     setIsPlaying((prev) => !prev);
-  }, [stepRange.end, totalSteps]);
+  }, [currentStep, totalSteps]);
 
   const handleTrajectoryLoad = useCallback((data: Trajectory, name: string) => {
     setTrajectory(data);
     setTrajectoryName(name);
-    setStepRange({ start: 0, end: 0 });
+    setCurrentStep(0);
     setDropError(null);
     setIsPlaying(false);
   }, []);
@@ -143,8 +152,8 @@ const App = () => {
 
   const nodeStates = useMemo(() => {
     if (!trajectory) return undefined;
-    return computeNodeStates(trajectory.stepStates, stepRange.end);
-  }, [trajectory, stepRange.end]);
+    return computeNodeStates(trajectory.stepStates, currentStep);
+  }, [trajectory, currentStep]);
 
   const movements = useMemo(() => {
     if (!trajectory) return [];
@@ -163,12 +172,11 @@ const App = () => {
 
   const activeActions: ActiveAction[] = useMemo(() => {
     if (!trajectory) return [];
-    const step = stepRange.end;
     const result: ActiveAction[] = [];
     for (const agent of [...trajectory.blueAgents, ...trajectory.redAgents]) {
       const actions = trajectory.agentActions[agent];
       if (!actions) continue;
-      const resolved = resolveEffectiveAction(actions, step);
+      const resolved = resolveEffectiveAction(actions, currentStep);
       if (resolved) {
         result.push({
           agent,
@@ -181,16 +189,15 @@ const App = () => {
       }
     }
     return result;
-  }, [trajectory, stepRange.end, blueSet]);
+  }, [trajectory, currentStep, blueSet]);
 
   const greenActiveHosts: Map<string, boolean> = useMemo(() => {
     const map = new Map<string, boolean>();
     if (!trajectory) return map;
-    const step = stepRange.end;
     for (const agent of trajectory.greenAgents) {
       const actions = trajectory.agentActions[agent];
       if (!actions) continue;
-      const resolved = resolveEffectiveAction(actions, step);
+      const resolved = resolveEffectiveAction(actions, currentStep);
       if (resolved && resolved.action.Host) {
         const host = resolved.action.Host;
         const isFailing = resolved.action.Status === 'FALSE';
@@ -198,7 +205,7 @@ const App = () => {
       }
     }
     return map;
-  }, [trajectory, stepRange.end]);
+  }, [trajectory, currentStep]);
 
   const topology = useNetworkTopology(trajectory);
 
@@ -215,11 +222,11 @@ const App = () => {
 
   const currentStepState = trajectory
     ? trajectory.stepStates[
-        Math.min(stepRange.end, trajectory.stepStates.length - 1)
+        Math.min(currentStep, trajectory.stepStates.length - 1)
       ]
     : undefined;
 
-  const currentScore = trajectory?.metricScores[stepRange.end];
+  const currentScore = trajectory?.metricScores[currentStep];
 
   if (initialLoading) {
     return (
@@ -299,11 +306,11 @@ const App = () => {
           ) : (
             <div className="flex-1 min-h-0">
               <ActionPanel
-                stepRange={stepRange}
+                currentStep={currentStep}
                 totalSteps={totalSteps}
                 score={currentScore}
                 stepState={currentStepState}
-                onStepRangeChange={setStepRange}
+                onStepChange={setCurrentStep}
                 agentVisibility={agentVisibility}
                 onAgentVisibilityChange={setAgentVisibility}
                 agentActions={trajectory.agentActions}
@@ -331,11 +338,13 @@ const App = () => {
 
       {trajectory && (
         <StepControls
-          stepRange={stepRange}
+          currentStep={currentStep}
           totalSteps={totalSteps}
-          onStepRangeChange={setStepRange}
+          onStepChange={setCurrentStep}
           isPlaying={isPlaying}
           onPlayToggle={handlePlayToggle}
+          trailLength={trailLength}
+          onTrailLengthChange={setTrailLength}
         />
       )}
     </div>

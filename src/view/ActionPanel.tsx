@@ -1,15 +1,14 @@
 import type { AgentAction, MetricScore, StepState } from '../trajectory/types';
-import type { StepRange } from './RangeSlider';
 import type { AgentVisibility } from '../App';
 import { MetricsCard } from './MetricsCard';
 import { ActionHistory } from './ActionHistory';
 
 type ActionPanelProps = {
-  stepRange: StepRange;
+  currentStep: number;
   totalSteps: number;
   score?: MetricScore;
   stepState?: StepState;
-  onStepRangeChange: (range: StepRange) => void;
+  onStepChange: (step: number) => void;
   agentVisibility: AgentVisibility;
   onAgentVisibilityChange: (visibility: AgentVisibility) => void;
   agentActions: Record<string, AgentAction[]>;
@@ -18,11 +17,11 @@ type ActionPanelProps = {
 };
 
 export const ActionPanel = ({
-  stepRange,
+  currentStep,
   totalSteps,
   score,
   stepState,
-  onStepRangeChange,
+  onStepChange,
   agentVisibility,
   onAgentVisibilityChange,
   agentActions,
@@ -31,7 +30,7 @@ export const ActionPanel = ({
 }: ActionPanelProps) => (
   <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4 w-full h-full flex flex-col">
     <div className="text-lg font-bold text-slate-100 pb-3 text-center">
-      Steps {stepRange.start + 1} - {stepRange.end + 1} / {totalSteps}
+      Step {currentStep + 1} / {totalSteps}
     </div>
 
     <div className="mb-3">
@@ -39,8 +38,8 @@ export const ActionPanel = ({
     </div>
 
     <ActionHistory
-      stepRange={stepRange}
-      onStepRangeChange={onStepRangeChange}
+      currentStep={currentStep}
+      onStepChange={onStepChange}
       agentVisibility={agentVisibility}
       onAgentVisibilityChange={onAgentVisibilityChange}
       agentActions={agentActions}
