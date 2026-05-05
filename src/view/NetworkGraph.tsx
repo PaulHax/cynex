@@ -81,9 +81,9 @@ const HOST_ICON_SIZE = 120;
 
 type HostIconKey = HostRole | 'server' | 'workstation' | 'defender';
 
-// Atlas SVG declares 1536x256 intrinsic size (8x its 192x32 viewBox) so the
-// rasterized texture has enough pixels to render crisply at large icon sizes.
-// All atlas coords below are in the 8x rasterized space.
+// Atlas SVG declares 3072x512 intrinsic size (16x its 192x32 viewBox) so the
+// rasterized texture has enough pixels to render crisply at large icon sizes
+// on high-DPR displays. All atlas coords below are in the 16x rasterized space.
 const HOST_ICON_MAPPING: Record<
   HostIconKey,
   {
@@ -99,57 +99,57 @@ const HOST_ICON_MAPPING: Record<
   database: {
     x: 0,
     y: 0,
-    width: 256,
-    height: 256,
-    anchorX: 128,
-    anchorY: 128,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   auth: {
-    x: 256,
+    x: 512,
     y: 0,
-    width: 256,
-    height: 256,
-    anchorX: 128,
-    anchorY: 128,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   // The gate glyph is visually bottom-heavy; tweak anchorY to center it.
   front: {
-    x: 512,
+    x: 1024,
     y: 0,
-    width: 256,
-    height: 256,
-    anchorX: 128,
-    anchorY: 144,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 288,
     mask: true,
   },
 
   server: {
-    x: 768,
+    x: 1536,
     y: 0,
-    width: 256,
-    height: 256,
-    anchorX: 128,
-    anchorY: 128,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   workstation: {
-    x: 1024,
+    x: 2048,
     y: 0,
-    width: 256,
-    height: 256,
-    anchorX: 128,
-    anchorY: 128,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   defender: {
-    x: 1280,
+    x: 2560,
     y: 0,
-    width: 256,
-    height: 256,
-    anchorX: 128,
-    anchorY: 128,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
 };
@@ -674,7 +674,7 @@ export const NetworkGraph = ({
       getTextAnchor: 'start',
       getAlignmentBaseline: 'bottom',
       fontFamily: 'system-ui, sans-serif',
-      fontSettings: { sdf: true, fontSize: 64, radius: 24, buffer: 12 },
+      fontSettings: { sdf: true, fontSize: 128, radius: 24, buffer: 12 },
     }),
 
     new PathLayer<EdgePath>({
@@ -682,7 +682,7 @@ export const NetworkGraph = ({
       data: connectionPaths,
       getPath: (d) => d.points,
       getColor: EDGE_COLORS.firewall,
-      getWidth: 3,
+      getWidth: 5,
       widthUnits: 'pixels',
       capRounded: true,
       jointRounded: true,
@@ -741,7 +741,7 @@ export const NetworkGraph = ({
       data: trails,
       getPath: (d) => d.path,
       getColor: (d) => d.color,
-      getWidth: 3,
+      getWidth: 6,
       widthUnits: 'pixels',
       capRounded: true,
       jointRounded: true,
