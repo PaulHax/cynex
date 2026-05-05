@@ -77,7 +77,7 @@ const getNodeRadius = (type: string): number => {
   }
 };
 
-const HOST_ICON_SIZE = 72;
+const HOST_ICON_SIZE = 144;
 
 type HostIconKey = HostRole | 'server' | 'workstation' | 'defender';
 
@@ -704,13 +704,13 @@ export const NetworkGraph = ({
       id: 'icon-node-highlights',
       data: allNodes.filter(hasHostIcon),
       getPosition: (d) => d.position,
-      getRadius: () => HOST_ICON_SIZE / 2 + 4,
+      getRadius: () => HOST_ICON_SIZE / 2 + 12,
       getFillColor: [0, 0, 0, 0],
       getLineColor: (d) => {
         const highlight = getHighlightColor(d.id);
         return highlight ?? [0, 0, 0, 0];
       },
-      getLineWidth: (d) => (getHighlightColor(d.id) ? 8 : 0),
+      getLineWidth: (d) => (getHighlightColor(d.id) ? 12 : 0),
       lineWidthUnits: 'pixels',
       stroked: true,
       filled: false,
