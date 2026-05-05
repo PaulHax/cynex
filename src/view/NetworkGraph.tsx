@@ -77,10 +77,13 @@ const getNodeRadius = (type: string): number => {
   }
 };
 
-const HOST_ICON_SIZE = 44;
+const HOST_ICON_SIZE = 120;
 
 type HostIconKey = HostRole | 'server' | 'workstation' | 'defender';
 
+// Atlas SVG declares 3072x512 intrinsic size (16x its 192x32 viewBox) so the
+// rasterized texture has enough pixels to render crisply at large icon sizes
+// on high-DPR displays. All atlas coords below are in the 16x rasterized space.
 const HOST_ICON_MAPPING: Record<
   HostIconKey,
   {
@@ -96,57 +99,57 @@ const HOST_ICON_MAPPING: Record<
   database: {
     x: 0,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   auth: {
-    x: 32,
+    x: 512,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   // The gate glyph is visually bottom-heavy; tweak anchorY to center it.
   front: {
-    x: 64,
+    x: 1024,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 18,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 288,
     mask: true,
   },
 
   server: {
-    x: 96,
+    x: 1536,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   workstation: {
-    x: 128,
+    x: 2048,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
   defender: {
-    x: 160,
+    x: 2560,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 512,
+    height: 512,
+    anchorX: 256,
+    anchorY: 256,
     mask: true,
   },
 };
@@ -400,6 +403,16 @@ export const NetworkGraph = ({
     [topology]
   );
 
+  // Subnet label color override for screenshots on light backgrounds.
+  // ?subnetLabelTone=dark switches the label text to dark gray.
+  const subnetLabelColor: [number, number, number] = useMemo(() => {
+    if (typeof window === 'undefined') return [226, 232, 240];
+    const tone = new URLSearchParams(window.location.search).get(
+      'subnetLabelTone'
+    );
+    return tone === 'dark' ? [30, 41, 59] : [226, 232, 240];
+  }, []);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -651,8 +664,8 @@ export const NetworkGraph = ({
       data: subnetLabels,
       getPosition: (d) => d.position,
       getText: (d) => d.text,
-      getColor: [226, 232, 240],
-      getSize: 12,
+      getColor: subnetLabelColor,
+      getSize: 14,
       sizeUnits: 'pixels',
       fontWeight: 'bold',
       background: true,
@@ -661,7 +674,10 @@ export const NetworkGraph = ({
       getTextAnchor: 'start',
       getAlignmentBaseline: 'bottom',
       fontFamily: 'system-ui, sans-serif',
-      fontSettings: { sdf: true, fontSize: 64, radius: 24, buffer: 12 },
+      // Bitmap (non-SDF) text rasterized by canvas2d at 128 px gives the
+      // sharpest output for our fixed display size; SDF blurs at small
+      // sizes regardless of radius tuning.
+      fontSettings: { sdf: false, fontSize: 128, buffer: 4 },
     }),
 
     new PathLayer<EdgePath>({
@@ -669,7 +685,7 @@ export const NetworkGraph = ({
       data: connectionPaths,
       getPath: (d) => d.points,
       getColor: EDGE_COLORS.firewall,
-      getWidth: 3,
+      getWidth: 5,
       widthUnits: 'pixels',
       capRounded: true,
       jointRounded: true,
@@ -704,13 +720,13 @@ export const NetworkGraph = ({
       id: 'icon-node-highlights',
       data: allNodes.filter(hasHostIcon),
       getPosition: (d) => d.position,
-      getRadius: () => HOST_ICON_SIZE / 2 + 4,
+      getRadius: () => HOST_ICON_SIZE / 2 + 12,
       getFillColor: [0, 0, 0, 0],
       getLineColor: (d) => {
         const highlight = getHighlightColor(d.id);
         return highlight ?? [0, 0, 0, 0];
       },
-      getLineWidth: (d) => (getHighlightColor(d.id) ? 8 : 0),
+      getLineWidth: (d) => (getHighlightColor(d.id) ? 12 : 0),
       lineWidthUnits: 'pixels',
       stroked: true,
       filled: false,
@@ -728,7 +744,7 @@ export const NetworkGraph = ({
       data: trails,
       getPath: (d) => d.path,
       getColor: (d) => d.color,
-      getWidth: 3,
+      getWidth: 6,
       widthUnits: 'pixels',
       capRounded: true,
       jointRounded: true,
