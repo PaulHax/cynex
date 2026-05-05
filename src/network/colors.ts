@@ -25,15 +25,15 @@ export const HOST_TYPE_COLORS: Record<HostType, RGBColor> = {
 } as const;
 
 const SUBNET_COLOR_PALETTE: RGBAColor[] = [
-  [59, 130, 246, 25], // blue
-  [139, 92, 246, 25], // purple
-  [239, 68, 68, 25], // red
-  [16, 185, 129, 25], // green
-  [245, 158, 11, 25], // amber
-  [236, 72, 153, 25], // pink
-  [14, 165, 233, 25], // sky
-  [168, 85, 247, 25], // violet
-  [234, 179, 8, 25], // yellow
+  [59, 130, 246, 64], // blue
+  [139, 92, 246, 64], // purple
+  [239, 68, 68, 64], // red
+  [16, 185, 129, 64], // green
+  [245, 158, 11, 64], // amber
+  [236, 72, 153, 64], // pink
+  [14, 165, 233, 64], // sky
+  [168, 85, 247, 64], // violet
+  [234, 179, 8, 64], // yellow
 ];
 
 export const getSubnetColor = (index: number): RGBAColor =>
