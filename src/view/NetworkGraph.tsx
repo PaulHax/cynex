@@ -665,7 +665,7 @@ export const NetworkGraph = ({
       getPosition: (d) => d.position,
       getText: (d) => d.text,
       getColor: subnetLabelColor,
-      getSize: 12,
+      getSize: 14,
       sizeUnits: 'pixels',
       fontWeight: 'bold',
       background: true,
@@ -674,7 +674,8 @@ export const NetworkGraph = ({
       getTextAnchor: 'start',
       getAlignmentBaseline: 'bottom',
       fontFamily: 'system-ui, sans-serif',
-      fontSettings: { sdf: true, fontSize: 128, radius: 24, buffer: 12 },
+      // Higher fontSize = denser SDF; tighter radius = sharper letter edges.
+      fontSettings: { sdf: true, fontSize: 256, radius: 8, buffer: 4 },
     }),
 
     new PathLayer<EdgePath>({
