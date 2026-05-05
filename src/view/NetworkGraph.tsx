@@ -81,6 +81,9 @@ const HOST_ICON_SIZE = 120;
 
 type HostIconKey = HostRole | 'server' | 'workstation' | 'defender';
 
+// Atlas SVG declares 1536x256 intrinsic size (8x its 192x32 viewBox) so the
+// rasterized texture has enough pixels to render crisply at large icon sizes.
+// All atlas coords below are in the 8x rasterized space.
 const HOST_ICON_MAPPING: Record<
   HostIconKey,
   {
@@ -96,57 +99,57 @@ const HOST_ICON_MAPPING: Record<
   database: {
     x: 0,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 256,
+    height: 256,
+    anchorX: 128,
+    anchorY: 128,
     mask: true,
   },
   auth: {
-    x: 32,
+    x: 256,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 256,
+    height: 256,
+    anchorX: 128,
+    anchorY: 128,
     mask: true,
   },
   // The gate glyph is visually bottom-heavy; tweak anchorY to center it.
   front: {
-    x: 64,
+    x: 512,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 18,
+    width: 256,
+    height: 256,
+    anchorX: 128,
+    anchorY: 144,
     mask: true,
   },
 
   server: {
-    x: 96,
+    x: 768,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 256,
+    height: 256,
+    anchorX: 128,
+    anchorY: 128,
     mask: true,
   },
   workstation: {
-    x: 128,
+    x: 1024,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 256,
+    height: 256,
+    anchorX: 128,
+    anchorY: 128,
     mask: true,
   },
   defender: {
-    x: 160,
+    x: 1280,
     y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
+    width: 256,
+    height: 256,
+    anchorX: 128,
+    anchorY: 128,
     mask: true,
   },
 };
