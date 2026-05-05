@@ -674,9 +674,10 @@ export const NetworkGraph = ({
       getTextAnchor: 'start',
       getAlignmentBaseline: 'bottom',
       fontFamily: 'system-ui, sans-serif',
-      // Higher fontSize = denser SDF; radius/buffer keep ~10%/3% of fontSize
-      // so letter edges stay smoothly anti-aliased instead of stair-stepped.
-      fontSettings: { sdf: true, fontSize: 192, radius: 18, buffer: 6 },
+      // Bitmap (non-SDF) text rasterized by canvas2d at 128 px gives the
+      // sharpest output for our fixed display size; SDF blurs at small
+      // sizes regardless of radius tuning.
+      fontSettings: { sdf: false, fontSize: 128, buffer: 4 },
     }),
 
     new PathLayer<EdgePath>({
