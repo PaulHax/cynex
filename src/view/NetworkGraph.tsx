@@ -403,6 +403,16 @@ export const NetworkGraph = ({
     [topology]
   );
 
+  // Subnet label color override for screenshots on light backgrounds.
+  // ?subnetLabelTone=dark switches the label text to dark gray.
+  const subnetLabelColor: [number, number, number] = useMemo(() => {
+    if (typeof window === 'undefined') return [226, 232, 240];
+    const tone = new URLSearchParams(window.location.search).get(
+      'subnetLabelTone'
+    );
+    return tone === 'dark' ? [30, 41, 59] : [226, 232, 240];
+  }, []);
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -654,7 +664,7 @@ export const NetworkGraph = ({
       data: subnetLabels,
       getPosition: (d) => d.position,
       getText: (d) => d.text,
-      getColor: [226, 232, 240],
+      getColor: subnetLabelColor,
       getSize: 12,
       sizeUnits: 'pixels',
       fontWeight: 'bold',

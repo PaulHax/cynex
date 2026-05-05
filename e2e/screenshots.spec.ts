@@ -29,31 +29,32 @@ test.use({
   },
 });
 
+async function setupView(page: import('@playwright/test').Page, url = '/') {
+  await page.goto(url);
+
+  // Wait for the canvas + step controls to be ready (trajectory loaded).
+  await page.locator('canvas').first().waitFor({ state: 'visible' });
+  await page.getByRole('button', { name: '▶', exact: true }).waitFor();
+
+  // Collapse the sidebar so the network fills the viewport.
+  const collapse = page.getByRole('button', { name: 'Collapse sidebar' });
+  if (await collapse.isVisible().catch(() => false)) {
+    await collapse.click();
+  }
+
+  // Step into the trajectory.
+  const next = page.getByRole('button', { name: '▶', exact: true });
+  for (let i = 0; i < STEPS_INTO_TRAJECTORY; i++) {
+    await next.click();
+  }
+
+  // Give deck.gl a moment to render the new step + trails.
+  await page.waitForTimeout(500);
+}
+
 test.describe('high-resolution network view screenshots', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-
-    // Wait for the canvas + step controls to be ready (trajectory loaded).
-    await page.locator('canvas').first().waitFor({ state: 'visible' });
-    await page.getByRole('button', { name: '▶', exact: true }).waitFor();
-
-    // Collapse the sidebar so the network fills the viewport.
-    const collapse = page.getByRole('button', { name: 'Collapse sidebar' });
-    if (await collapse.isVisible().catch(() => false)) {
-      await collapse.click();
-    }
-
-    // Step into the trajectory.
-    const next = page.getByRole('button', { name: '▶', exact: true });
-    for (let i = 0; i < STEPS_INTO_TRAJECTORY; i++) {
-      await next.click();
-    }
-
-    // Give deck.gl a moment to render the new step + trails.
-    await page.waitForTimeout(500);
-  });
-
   test('dark background', async ({ page }) => {
+    await setupView(page);
     const network = page.locator('.bg-slate-950').first();
     await network.screenshot({
       path: resolve(OUTPUT_DIR, 'network-dark.png'),
@@ -62,6 +63,10 @@ test.describe('high-resolution network view screenshots', () => {
   });
 
   test('white background', async ({ page }) => {
+    // ?subnetLabelTone=dark makes the deck.gl subnet labels dark gray so
+    // they stay readable against the (soon-to-be-white) page background.
+    await setupView(page, '/?subnetLabelTone=dark');
+
     // Override the dark page/network background. The deck.gl canvas is
     // transparent by default, so the parent's background shows through.
     await page.addStyleTag({
