@@ -77,7 +77,7 @@ const getNodeRadius = (type: string): number => {
   }
 };
 
-const HOST_ICON_SIZE = 44;
+const HOST_ICON_SIZE = 72;
 
 type HostIconKey = HostRole | 'server' | 'workstation' | 'defender';
 
