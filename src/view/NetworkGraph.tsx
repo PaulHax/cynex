@@ -674,8 +674,9 @@ export const NetworkGraph = ({
       getTextAnchor: 'start',
       getAlignmentBaseline: 'bottom',
       fontFamily: 'system-ui, sans-serif',
-      // Higher fontSize = denser SDF; tighter radius = sharper letter edges.
-      fontSettings: { sdf: true, fontSize: 256, radius: 8, buffer: 4 },
+      // Higher fontSize = denser SDF; radius/buffer keep ~10%/3% of fontSize
+      // so letter edges stay smoothly anti-aliased instead of stair-stepped.
+      fontSettings: { sdf: true, fontSize: 192, radius: 18, buffer: 6 },
     }),
 
     new PathLayer<EdgePath>({
