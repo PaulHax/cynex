@@ -230,9 +230,18 @@ const createTrailPath = (
   const ux = dx / len;
   const uy = dy / len;
 
-  const pixelGap = 20;
+  // Pull the trail's endpoints back so they meet the host icon's edge rather
+  // than its center. Icons render at HOST_ICON_SIZE world units but get
+  // clamped to [minPx, maxPx] in screen space, so we mirror that clamp here
+  // to keep the gap correct at any zoom or window size. The −2 nudge
+  // preserves the small overlap the old fixed 20 px gap had against the
+  // 22 px-radius icons it was tuned against.
   const scale = Math.pow(2, zoom);
-  const worldGap = pixelGap / scale;
+  const iconHalfPx = Math.min(
+    SIZES.hostIcon.maxPx / 2,
+    Math.max(SIZES.hostIcon.minPx / 2, (HOST_ICON_SIZE / 2) * scale)
+  );
+  const worldGap = (iconHalfPx - 2) / scale;
 
   const edgeStart: [number, number] = [
     fromPos[0] + ux * worldGap,
