@@ -50,7 +50,7 @@ export const StepControls = ({
     'px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
-    <div className="bg-slate-900 px-4 py-2 flex items-center gap-4">
+    <div className="relative z-30 bg-slate-900 px-4 py-2 flex items-center gap-4">
       <div className="flex items-center gap-1">
         <button
           className={buttonClass}

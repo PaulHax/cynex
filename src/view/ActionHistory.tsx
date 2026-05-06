@@ -80,11 +80,11 @@ const AgentActionLine = memo(
       {showLabel && (
         <span className="text-slate-400 shrink-0">{shortAgentName(agent)}</span>
       )}
-      <div className="min-w-0">
-        <span className="text-slate-200 font-medium text-xs truncate">
+      <div className="min-w-0 flex-1">
+        <div className="text-slate-200 font-medium text-xs truncate">
           {action.Action}
           {inProgress && <span className="text-slate-400">&hellip;</span>}
-        </span>
+        </div>
         {action.Host && (
           <div className="text-slate-300 text-xs truncate">{action.Host}</div>
         )}
