@@ -77,84 +77,82 @@ const getNodeRadius = (type: string): number => {
   }
 };
 
-const HOST_ICON_SIZE = 44;
+// Visual sizes are in deck.gl 'common' units — i.e. world coordinates that
+// scale 1:1 with the layout. The min/max bounds (in CSS pixels) clamp the
+// rendered size so things stay readable on tiny windows and don't get
+// cartoonish at extreme zoom-in. NODE_WIDTH in computeLayout is 30, so an
+// icon of 44 world units is ~1.5× the host slot — matches the previous
+// CSS-pixel look at typical desktop scale, and grows on bigger displays.
+const SIZES = {
+  hostIcon: { common: 44, minPx: 28, maxPx: 160 },
+  greenStatus: { common: 14, minPx: 12, maxPx: 56 },
+  subnetLabel: { common: 12, minPx: 11, maxPx: 32 },
+  pathStroke: { common: 3, minPx: 2, maxPx: 10 },
+  highlightStroke: { common: 8, minPx: 4, maxPx: 24 },
+  nodeStroke: { common: 8, minPx: 4, maxPx: 24 },
+  nodeRadiusMinPx: 6,
+  nodeRadiusMaxPx: 56,
+  highlightRingPad: 4, // common units, added to icon half-size
+  highlightRingMinPx: 18,
+  highlightRingMaxPx: 90,
+} as const;
+
+const HOST_ICON_SIZE = SIZES.hostIcon.common;
 
 type HostIconKey = HostRole | 'server' | 'workstation' | 'defender';
 
-const HOST_ICON_MAPPING: Record<
-  HostIconKey,
-  {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    anchorX: number;
-    anchorY: number;
-    mask: boolean;
-  }
-> = {
-  database: {
-    x: 0,
-    y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
-    mask: true,
-  },
-  auth: {
-    x: 32,
-    y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
-    mask: true,
-  },
-  // The gate glyph is visually bottom-heavy; tweak anchorY to center it.
-  front: {
-    x: 64,
-    y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 18,
-    mask: true,
-  },
+// The atlas SVG has viewBox="0 0 192 32" but is rasterized by the browser at
+// its intrinsic width/height — we declare those at 16× the viewBox so deck.gl
+// gets a 3072×512 texture (512 per icon tile). That's enough density to stay
+// crisp at any practical devicePixelRatio (up to ~10× at HOST_ICON_SIZE=44),
+// making icons effectively vector-quality on screen. Bump this further only
+// if you also bump HOST_ICON_SIZE for screenshot/poster use.
+const HOST_ICON_TILE_PX = 512;
 
-  server: {
-    x: 96,
-    y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
-    mask: true,
-  },
-  workstation: {
-    x: 128,
-    y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
-    mask: true,
-  },
-  defender: {
-    x: 160,
-    y: 0,
-    width: 32,
-    height: 32,
-    anchorX: 16,
-    anchorY: 16,
-    mask: true,
-  },
+const tile = (
+  col: number,
+  anchorY = HOST_ICON_TILE_PX / 2
+): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  anchorX: number;
+  anchorY: number;
+  mask: boolean;
+} => ({
+  x: col * HOST_ICON_TILE_PX,
+  y: 0,
+  width: HOST_ICON_TILE_PX,
+  height: HOST_ICON_TILE_PX,
+  anchorX: HOST_ICON_TILE_PX / 2,
+  anchorY,
+  mask: true,
+});
+
+// The 'front' glyph is visually bottom-heavy; nudge its anchor down 2 viewBox
+// units (≈6.25% of a tile) so it visually centers.
+const FRONT_ANCHOR_Y = HOST_ICON_TILE_PX / 2 + HOST_ICON_TILE_PX * (2 / 32);
+
+const HOST_ICON_MAPPING: Record<HostIconKey, ReturnType<typeof tile>> = {
+  database: tile(0),
+  auth: tile(1),
+  front: tile(2, FRONT_ANCHOR_Y),
+  server: tile(3),
+  workstation: tile(4),
+  defender: tile(5),
 };
 
+// Two 16x16 status glyphs side-by-side. The intrinsic width/height are
+// bumped above the viewBox so the browser rasterizes the SVG at high
+// density, keeping edges crisp at any devicePixelRatio.
+const GREEN_STATUS_TILE_PX = 256;
 const GREEN_STATUS_ATLAS =
   'data:image/svg+xml,' +
   encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="16">' +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 16" width="${
+      GREEN_STATUS_TILE_PX * 2
+    }" height="${GREEN_STATUS_TILE_PX}">` +
       '<polyline points="3,8 6.5,12 13,4" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
       '<line x1="19" y1="3" x2="29" y2="13" stroke="white" stroke-width="2.5" stroke-linecap="round"/>' +
       '<line x1="29" y1="3" x2="19" y2="13" stroke="white" stroke-width="2.5" stroke-linecap="round"/>' +
@@ -165,19 +163,19 @@ const GREEN_STATUS_MAPPING = {
   check: {
     x: 0,
     y: 0,
-    width: 16,
-    height: 16,
-    anchorX: 8,
-    anchorY: 8,
+    width: GREEN_STATUS_TILE_PX,
+    height: GREEN_STATUS_TILE_PX,
+    anchorX: GREEN_STATUS_TILE_PX / 2,
+    anchorY: GREEN_STATUS_TILE_PX / 2,
     mask: true,
   },
   cross: {
-    x: 16,
+    x: GREEN_STATUS_TILE_PX,
     y: 0,
-    width: 16,
-    height: 16,
-    anchorX: 8,
-    anchorY: 8,
+    width: GREEN_STATUS_TILE_PX,
+    height: GREEN_STATUS_TILE_PX,
+    anchorX: GREEN_STATUS_TILE_PX / 2,
+    anchorY: GREEN_STATUS_TILE_PX / 2,
     mask: true,
   },
 };
@@ -652,8 +650,10 @@ export const NetworkGraph = ({
       getPosition: (d) => d.position,
       getText: (d) => d.text,
       getColor: [226, 232, 240],
-      getSize: 12,
-      sizeUnits: 'pixels',
+      getSize: SIZES.subnetLabel.common,
+      sizeUnits: 'common',
+      sizeMinPixels: SIZES.subnetLabel.minPx,
+      sizeMaxPixels: SIZES.subnetLabel.maxPx,
       fontWeight: 'bold',
       background: true,
       getBackgroundColor: (d) => d.color,
@@ -661,7 +661,10 @@ export const NetworkGraph = ({
       getTextAnchor: 'start',
       getAlignmentBaseline: 'bottom',
       fontFamily: 'system-ui, sans-serif',
-      fontSettings: { sdf: true, fontSize: 64, radius: 24, buffer: 12 },
+      // Bitmap glyphs rasterized by canvas2d at 128 px keep edges crisp when
+      // deck.gl downsamples to the rendered size at any zoom or DPR. SDF text
+      // would stay infinitely scalable but goes soft at small display sizes.
+      fontSettings: { sdf: false, fontSize: 128, buffer: 4 },
     }),
 
     new PathLayer<EdgePath>({
@@ -669,8 +672,10 @@ export const NetworkGraph = ({
       data: connectionPaths,
       getPath: (d) => d.points,
       getColor: EDGE_COLORS.firewall,
-      getWidth: 3,
-      widthUnits: 'pixels',
+      getWidth: SIZES.pathStroke.common,
+      widthUnits: 'common',
+      widthMinPixels: SIZES.pathStroke.minPx,
+      widthMaxPixels: SIZES.pathStroke.maxPx,
       capRounded: true,
       jointRounded: true,
     }),
@@ -685,11 +690,16 @@ export const NetworkGraph = ({
         const highlight = getHighlightColor(d.id);
         return highlight ?? [0, 0, 0, 0];
       },
-      getLineWidth: (d) => (getHighlightColor(d.id) ? 8 : 0),
-      lineWidthUnits: 'pixels',
+      getLineWidth: (d) =>
+        getHighlightColor(d.id) ? SIZES.nodeStroke.common : 0,
+      lineWidthUnits: 'common',
+      lineWidthMinPixels: SIZES.nodeStroke.minPx,
+      lineWidthMaxPixels: SIZES.nodeStroke.maxPx,
       stroked: true,
       filled: true,
-      radiusUnits: 'pixels',
+      radiusUnits: 'common',
+      radiusMinPixels: SIZES.nodeRadiusMinPx,
+      radiusMaxPixels: SIZES.nodeRadiusMaxPx,
       antialiasing: true,
       pickable: true,
       updateTriggers: {
@@ -704,17 +714,22 @@ export const NetworkGraph = ({
       id: 'icon-node-highlights',
       data: allNodes.filter(hasHostIcon),
       getPosition: (d) => d.position,
-      getRadius: () => HOST_ICON_SIZE / 2 + 4,
+      getRadius: () => HOST_ICON_SIZE / 2 + SIZES.highlightRingPad,
       getFillColor: [0, 0, 0, 0],
       getLineColor: (d) => {
         const highlight = getHighlightColor(d.id);
         return highlight ?? [0, 0, 0, 0];
       },
-      getLineWidth: (d) => (getHighlightColor(d.id) ? 8 : 0),
-      lineWidthUnits: 'pixels',
+      getLineWidth: (d) =>
+        getHighlightColor(d.id) ? SIZES.highlightStroke.common : 0,
+      lineWidthUnits: 'common',
+      lineWidthMinPixels: SIZES.highlightStroke.minPx,
+      lineWidthMaxPixels: SIZES.highlightStroke.maxPx,
       stroked: true,
       filled: false,
-      radiusUnits: 'pixels',
+      radiusUnits: 'common',
+      radiusMinPixels: SIZES.highlightRingMinPx,
+      radiusMaxPixels: SIZES.highlightRingMaxPx,
       antialiasing: true,
       pickable: false,
       updateTriggers: {
@@ -728,8 +743,10 @@ export const NetworkGraph = ({
       data: trails,
       getPath: (d) => d.path,
       getColor: (d) => d.color,
-      getWidth: 3,
-      widthUnits: 'pixels',
+      getWidth: SIZES.pathStroke.common,
+      widthUnits: 'common',
+      widthMinPixels: SIZES.pathStroke.minPx,
+      widthMaxPixels: SIZES.pathStroke.maxPx,
       capRounded: true,
       jointRounded: true,
       updateTriggers: {
@@ -745,8 +762,10 @@ export const NetworkGraph = ({
       iconMapping: HOST_ICON_MAPPING,
       getIcon: getHostIconKey,
       getPosition: (d) => d.position,
-      getSize: HOST_ICON_SIZE,
-      sizeUnits: 'pixels',
+      getSize: SIZES.hostIcon.common,
+      sizeUnits: 'common',
+      sizeMinPixels: SIZES.hostIcon.minPx,
+      sizeMaxPixels: SIZES.hostIcon.maxPx,
       getColor: getNodeFillColorRGBA,
       billboard: true,
       pickable: true,
@@ -763,8 +782,10 @@ export const NetworkGraph = ({
       iconMapping: GREEN_STATUS_MAPPING,
       getIcon: (d) => (d.failing ? 'cross' : 'check'),
       getPosition: (d) => d.position,
-      getSize: 14,
-      sizeUnits: 'pixels',
+      getSize: SIZES.greenStatus.common,
+      sizeUnits: 'common',
+      sizeMinPixels: SIZES.greenStatus.minPx,
+      sizeMaxPixels: SIZES.greenStatus.maxPx,
       getColor: (d) => (d.failing ? [239, 68, 68, 255] : [74, 222, 128, 255]),
       getPixelOffset: [0, -2],
       pickable: false,
