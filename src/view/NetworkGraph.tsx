@@ -825,8 +825,11 @@ export const NetworkGraph = ({
           viewState={viewState}
           onViewStateChange={onViewStateChange}
           controller={{
-            scrollZoom: { speed: 0.01, smooth: true },
-            inertia: true,
+            // Smaller speed = finer per-tick zoom step; smooth interpolates
+            // each step over a short animation; inertia carries the motion
+            // after the wheel/trackpad gesture stops.
+            scrollZoom: { speed: 0.003, smooth: true },
+            inertia: 300,
           }}
           layers={layers}
           onHover={onHover}
