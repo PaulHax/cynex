@@ -253,7 +253,7 @@ const App = () => {
 
       <div className="flex-1 flex min-h-0">
         <div
-          className={`relative flex-shrink-0 w-[420px] flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? '-ml-[420px]' : ''}`}
+          className={`relative z-20 flex-shrink-0 w-[420px] flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? '-ml-[420px]' : ''}`}
         >
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
