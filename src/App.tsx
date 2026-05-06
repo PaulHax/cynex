@@ -38,6 +38,7 @@ const App = () => {
     blue: true,
     red: true,
   });
+  const [manifestFiles, setManifestFiles] = useState<string[]>([]);
 
   const stepRange: StepRange = useMemo(
     () => ({
@@ -51,11 +52,22 @@ const App = () => {
     const loadInitialTrajectory = async () => {
       const params = new URLSearchParams(window.location.search);
       const fileParam = params.get('file');
+      const episodeParam = params.get('episode');
+      const stepParam = params.get('step');
+      const parsedStep = stepParam ? parseInt(stepParam, 10) : NaN;
+      const initialStep = Number.isFinite(parsedStep)
+        ? Math.max(0, parsedStep)
+        : 0;
+
+      const applyLoadedTrajectory = (data: Trajectory) => {
+        setTrajectory(data);
+        setCurrentStep(Math.min(initialStep, Math.max(0, data.totalSteps - 1)));
+      };
 
       if (fileParam) {
         try {
           const data = await loadTrajectory(fileParam);
-          setTrajectory(data);
+          applyLoadedTrajectory(data);
           setTrajectoryName(fileParam.split('/').pop() ?? fileParam);
           setInitialLoading(false);
           return;
@@ -65,12 +77,21 @@ const App = () => {
       }
 
       const manifest = await loadTrajectoryManifest();
+      setManifestFiles(manifest.files);
       if (manifest.files.length > 0) {
-        const firstFile = manifest.files[0];
+        let targetFile = manifest.files[0];
+        if (episodeParam) {
+          const wanted = episodeParam.endsWith('.json')
+            ? episodeParam
+            : `${episodeParam}.json`;
+          if (manifest.files.includes(wanted)) {
+            targetFile = wanted;
+          }
+        }
         try {
-          const data = await loadTrajectory(`/data/trajectories/${firstFile}`);
-          setTrajectory(data);
-          setTrajectoryName(firstFile);
+          const data = await loadTrajectory(`/data/trajectories/${targetFile}`);
+          applyLoadedTrajectory(data);
+          setTrajectoryName(targetFile);
         } catch {
           // No default trajectory available, user will need to load one
         }
@@ -80,6 +101,29 @@ const App = () => {
 
     loadInitialTrajectory();
   }, []);
+
+  useEffect(() => {
+    if (initialLoading) return;
+    const params = new URLSearchParams(window.location.search);
+    const isManifestTrajectory =
+      trajectoryName !== null && manifestFiles.includes(trajectoryName);
+    if (isManifestTrajectory) {
+      params.set('episode', trajectoryName.replace(/\.json$/, ''));
+      params.delete('file');
+    } else {
+      params.delete('episode');
+    }
+    if (isManifestTrajectory && currentStep > 0) {
+      params.set('step', String(currentStep));
+    } else {
+      params.delete('step');
+    }
+    const search = params.toString();
+    const newUrl = search
+      ? `${window.location.pathname}?${search}`
+      : window.location.pathname;
+    window.history.replaceState(null, '', newUrl);
+  }, [trajectoryName, currentStep, initialLoading, manifestFiles]);
 
   const totalSteps = trajectory?.totalSteps ?? 0;
 
