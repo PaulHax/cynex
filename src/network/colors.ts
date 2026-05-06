@@ -24,16 +24,20 @@ export const HOST_TYPE_COLORS: Record<HostType, RGBColor> = {
   router: [56, 189, 248],
 } as const;
 
+// Opaque equivalents of each tinted hue blended over bg-slate-950 at alpha 25.
+// Subnet polygons are now opaque (alpha 255) so the firewall connection lines
+// can render beneath them and stay hidden where they enter a subnet — but the
+// apparent dark-tinted color matches the previous semitransparent rendering.
 const SUBNET_COLOR_PALETTE: RGBAColor[] = [
-  [59, 130, 246, 25], // blue
-  [139, 92, 246, 25], // purple
-  [239, 68, 68, 25], // red
-  [16, 185, 129, 25], // green
-  [245, 158, 11, 25], // amber
-  [236, 72, 153, 25], // pink
-  [14, 165, 233, 25], // sky
-  [168, 85, 247, 25], // violet
-  [234, 179, 8, 25], // yellow
+  [8, 18, 45, 255], // blue
+  [15, 14, 45, 255], // purple
+  [25, 12, 27, 255], // red
+  [3, 24, 33, 255], // green
+  [26, 21, 22, 255], // amber
+  [25, 12, 36, 255], // pink
+  [3, 22, 44, 255], // sky
+  [18, 14, 45, 255], // violet
+  [25, 23, 22, 255], // yellow
 ];
 
 export const getSubnetColor = (index: number): RGBAColor =>

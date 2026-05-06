@@ -634,6 +634,22 @@ export const NetworkGraph = ({
   }
 
   const layers = [
+    // Firewall connection paths render BEFORE subnet backgrounds so the line
+    // is hidden where it crosses a subnet — visually the connection
+    // terminates at the subnet edge instead of sitting on top of it.
+    new PathLayer<EdgePath>({
+      id: 'subnet-connections',
+      data: connectionPaths,
+      getPath: (d) => d.points,
+      getColor: EDGE_COLORS.firewall,
+      getWidth: SIZES.pathStroke.common,
+      widthUnits: 'common',
+      widthMinPixels: SIZES.pathStroke.minPx,
+      widthMaxPixels: SIZES.pathStroke.maxPx,
+      capRounded: true,
+      jointRounded: true,
+    }),
+
     new PolygonLayer({
       id: 'subnet-backgrounds',
       data: subnetPolygons,
@@ -665,19 +681,6 @@ export const NetworkGraph = ({
       // deck.gl downsamples to the rendered size at any zoom or DPR. SDF text
       // would stay infinitely scalable but goes soft at small display sizes.
       fontSettings: { sdf: false, fontSize: 128, buffer: 4 },
-    }),
-
-    new PathLayer<EdgePath>({
-      id: 'subnet-connections',
-      data: connectionPaths,
-      getPath: (d) => d.points,
-      getColor: EDGE_COLORS.firewall,
-      getWidth: SIZES.pathStroke.common,
-      widthUnits: 'common',
-      widthMinPixels: SIZES.pathStroke.minPx,
-      widthMaxPixels: SIZES.pathStroke.maxPx,
-      capRounded: true,
-      jointRounded: true,
     }),
 
     new ScatterplotLayer({
