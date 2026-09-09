@@ -52,11 +52,20 @@ const hostInfoSchema = z.object({
   'System info': systemInfoSchema,
 });
 
-const agentActionV1Schema = z.object({
-  Action: z.string(),
-  Status: z.string(),
-  Host: z.string(),
-});
+const agentActionV1Schema = z
+  .object({
+    Action: z.string(),
+    Status: z.string(),
+    Host: z.string().optional(),
+    Subnet: z.string().optional(),
+  })
+  .refine(
+    (action) => action.Host !== undefined || action.Subnet !== undefined,
+    {
+      message: 'Action must include a Host or Subnet target',
+      path: ['Host'],
+    }
+  );
 
 const agentActionSchema = z.object({
   step: z.number(),
@@ -70,7 +79,7 @@ const metricScoreSchema = z.object({
   C: z.number(),
   I: z.number(),
   A: z.number(),
-  Resilience: z.number(),
+  Resilience: z.number().optional(),
 });
 
 const subnetMetadataSchema = z.object({
@@ -96,7 +105,7 @@ export const trajectoryV1Schema = z.object({
   network_topology: z.record(z.string(), hostInfoSchema),
   blue_actions: z.array(agentActionV1Schema),
   red_actions: z.array(agentActionV1Schema),
-  metric_scores: z.array(metricScoreSchema),
+  metric_scores: z.array(metricScoreSchema).default([]),
 });
 
 export const trajectoryV2Schema = z.object({
@@ -113,7 +122,7 @@ export const trajectoryV2Schema = z.object({
   subnet_metadata: z.record(z.string(), subnetMetadataSchema),
   agent_actions: z.record(z.string(), z.array(agentActionSchema)),
   step_states: z.array(stepStateSchema),
-  metric_scores: z.array(metricScoreSchema),
+  metric_scores: z.array(metricScoreSchema).default([]),
   blue_agent_name: z.string(),
   red_agent_name: z.string(),
   blue_actions: z.array(agentActionSchema),

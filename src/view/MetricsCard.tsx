@@ -66,12 +66,14 @@ export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
           <span className="text-slate-400">A</span>{' '}
           <span className="font-bold text-slate-200 ml-1">{score.A}</span>
         </span>
-        <span>
-          <span className="text-slate-400">R</span>{' '}
-          <span className="font-bold text-slate-200 ml-1">
-            {score.Resilience.toFixed(1)}
+        {score.Resilience !== undefined && (
+          <span>
+            <span className="text-slate-400">R</span>{' '}
+            <span className="font-bold text-slate-200 ml-1">
+              {score.Resilience.toFixed(1)}
+            </span>
           </span>
-        </span>
+        )}
       </div>
     </div>
   );

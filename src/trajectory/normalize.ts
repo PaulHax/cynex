@@ -29,7 +29,7 @@ const computeStepStates = (
 
   for (let step = 0; step < blueActions.length; step++) {
     const red = redActions[step];
-    if (red?.Status === 'TRUE' && red.Host !== red.Action) {
+    if (red?.Status === 'TRUE' && red.Host && red.Host !== red.Action) {
       if (USER_ACCESS_ACTIONS.has(red.Action)) compromise[red.Host] = 'USER';
       else if (ROOT_ACCESS_ACTIONS.has(red.Action))
         compromise[red.Host] = 'PRIVILEGED';
@@ -38,6 +38,7 @@ const computeStepStates = (
     const blue = blueActions[step];
     if (
       blue?.Status === 'TRUE' &&
+      blue.Host &&
       RESTORE_ACTIONS.has(blue.Action) &&
       blue.Host !== blue.Action
     ) {
@@ -151,8 +152,8 @@ const convertV1Actions = (actions: RawV1['blue_actions']): AgentAction[] =>
     step,
     Action: a.Action,
     Status: a.Status,
-    Host: a.Host,
-    Params: {},
+    Host: a.Host ?? '',
+    Params: a.Subnet ? { Subnet: a.Subnet } : {},
   }));
 
 // --- Normalizers ---

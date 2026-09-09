@@ -9,6 +9,8 @@ import { NetworkGraph } from './view/NetworkGraph';
 import { ActionPanel } from './view/ActionPanel';
 import { StepControls } from './view/StepControls';
 import { TrajectorySelector } from './view/TrajectorySelector';
+import { CiaScoreTimeline } from './view/CiaScoreTimeline';
+import type { CiaPlotMode } from './view/CiaScoreTimeline';
 import type { StepRange } from './view/RangeSlider';
 import {
   loadTrajectoryManifest,
@@ -34,6 +36,9 @@ const App = () => {
   const [dropLoading, setDropLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [ciaTimelineExpanded, setCiaTimelineExpanded] = useState(true);
+  const [ciaPlotMode, setCiaPlotMode] = useState<CiaPlotMode>('sum');
+  const [ciaAverageWindow, setCiaAverageWindow] = useState(5);
   const [agentVisibility, setAgentVisibility] = useState<AgentVisibility>({
     blue: true,
     red: true,
@@ -62,6 +67,7 @@ const App = () => {
       const applyLoadedTrajectory = (data: Trajectory) => {
         setTrajectory(data);
         setCurrentStep(Math.min(initialStep, Math.max(0, data.totalSteps - 1)));
+        setCiaTimelineExpanded(true);
       };
 
       if (fileParam) {
@@ -155,6 +161,7 @@ const App = () => {
     setCurrentStep(0);
     setDropError(null);
     setIsPlaying(false);
+    setCiaTimelineExpanded(true);
   }, []);
 
   const handleDragOver = useCallback((e: DragEvent) => {
@@ -272,6 +279,21 @@ const App = () => {
 
   const currentScore = trajectory?.metricScores[currentStep];
 
+  const ciaScores = useMemo(
+    () =>
+      trajectory?.metricScores.filter(
+        (score) =>
+          Number.isFinite(score.C) &&
+          Number.isFinite(score.I) &&
+          Number.isFinite(score.A)
+      ) ?? [],
+    [trajectory]
+  );
+  const effectiveCiaAverageWindow = Math.min(
+    ciaAverageWindow,
+    Math.max(1, ciaScores.length)
+  );
+
   if (initialLoading) {
     return (
       <div className="h-full bg-slate-900 flex items-center justify-center">
@@ -380,6 +402,17 @@ const App = () => {
         </div>
       </div>
 
+      {ciaScores.length > 0 && (
+        <CiaScoreTimeline
+          scores={ciaScores}
+          currentStep={currentStep}
+          expanded={ciaTimelineExpanded}
+          mode={ciaPlotMode}
+          averageWindow={effectiveCiaAverageWindow}
+          onExpandedChange={setCiaTimelineExpanded}
+        />
+      )}
+
       {trajectory && (
         <StepControls
           currentStep={currentStep}
@@ -389,6 +422,17 @@ const App = () => {
           onPlayToggle={handlePlayToggle}
           trailLength={trailLength}
           onTrailLengthChange={setTrailLength}
+          ciaPlotSettings={
+            ciaScores.length > 0
+              ? {
+                  mode: ciaPlotMode,
+                  averageWindow: effectiveCiaAverageWindow,
+                  maxAverageWindow: ciaScores.length,
+                  onModeChange: setCiaPlotMode,
+                  onAverageWindowChange: setCiaAverageWindow,
+                }
+              : undefined
+          }
         />
       )}
     </div>
