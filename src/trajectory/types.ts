@@ -10,7 +10,7 @@ export type MetricScore = {
   C: number;
   I: number;
   A: number;
-  Resilience: number;
+  Resilience?: number;
 };
 
 export type Subnet = {
