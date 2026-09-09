@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { StepSlider } from './RangeSlider';
+import type { CiaPlotMode } from './CiaScoreTimeline';
+
+type CiaPlotSettings = {
+  mode: CiaPlotMode;
+  averageWindow: number;
+  maxAverageWindow: number;
+  onModeChange: (mode: CiaPlotMode) => void;
+  onAverageWindowChange: (window: number) => void;
+};
 
 type StepControlsProps = {
   currentStep: number;
@@ -9,6 +18,7 @@ type StepControlsProps = {
   onPlayToggle: () => void;
   trailLength: number;
   onTrailLengthChange: (length: number) => void;
+  ciaPlotSettings?: CiaPlotSettings;
 };
 
 export const StepControls = ({
@@ -19,6 +29,7 @@ export const StepControls = ({
   onPlayToggle,
   trailLength,
   onTrailLengthChange,
+  ciaPlotSettings,
 }: StepControlsProps) => {
   const maxStep = totalSteps - 1;
   const [showSettings, setShowSettings] = useState(false);
@@ -109,7 +120,7 @@ export const StepControls = ({
           ref={buttonRef}
           className="p-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-slate-100 rounded transition-colors"
           onClick={() => setShowSettings(!showSettings)}
-          title="Trail settings"
+          title="Settings"
         >
           <svg
             className="w-4 h-4"
@@ -134,9 +145,9 @@ export const StepControls = ({
         {showSettings && (
           <div
             ref={popoverRef}
-            className="absolute bottom-full right-0 mb-2 bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl min-w-[200px]"
+            className="absolute bottom-full right-0 mb-2 min-w-[260px] rounded-lg border border-slate-600 bg-slate-800 p-3 shadow-xl"
           >
-            <label className="text-xs text-slate-400 block mb-1">
+            <label className="mb-1 block text-xs text-slate-400">
               Trace lookback steps: {trailLength}
             </label>
             <input
@@ -147,6 +158,84 @@ export const StepControls = ({
               onChange={(e) => onTrailLengthChange(Number(e.target.value))}
               className="w-full accent-blue-400"
             />
+
+            {ciaPlotSettings && (
+              <div className="mt-3 border-t border-slate-600/70 pt-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
+                    CIA plot
+                  </span>
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500">
+                    Display mode
+                  </span>
+                </div>
+
+                <div
+                  className="grid grid-cols-2 gap-1 rounded bg-slate-900/70 p-1"
+                  role="group"
+                  aria-label="CIA plot mode"
+                >
+                  <button
+                    type="button"
+                    className={`rounded px-2 py-1.5 text-left transition-colors ${
+                      ciaPlotSettings.mode === 'sum'
+                        ? 'bg-cyan-400/15 text-cyan-200 ring-1 ring-cyan-400/40'
+                        : 'text-slate-400 hover:bg-slate-700/70 hover:text-slate-200'
+                    }`}
+                    aria-pressed={ciaPlotSettings.mode === 'sum'}
+                    onClick={() => ciaPlotSettings.onModeChange('sum')}
+                  >
+                    <span className="block font-mono text-[10px] font-semibold">
+                      SUM
+                    </span>
+                    <span className="block text-[9px] opacity-70">
+                      Running total
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded px-2 py-1.5 text-left transition-colors ${
+                      ciaPlotSettings.mode === 'trend'
+                        ? 'bg-cyan-400/15 text-cyan-200 ring-1 ring-cyan-400/40'
+                        : 'text-slate-400 hover:bg-slate-700/70 hover:text-slate-200'
+                    }`}
+                    aria-pressed={ciaPlotSettings.mode === 'trend'}
+                    onClick={() => ciaPlotSettings.onModeChange('trend')}
+                  >
+                    <span className="block font-mono text-[10px] font-semibold">
+                      TREND
+                    </span>
+                    <span className="block text-[9px] opacity-70">
+                      Running average
+                    </span>
+                  </button>
+                </div>
+
+                {ciaPlotSettings.mode === 'trend' && (
+                  <label className="mt-3 block">
+                    <span className="mb-1 flex items-center justify-between text-xs text-slate-400">
+                      <span>Average window</span>
+                      <output className="font-mono text-cyan-200">
+                        {ciaPlotSettings.averageWindow} steps
+                      </output>
+                    </span>
+                    <input
+                      type="range"
+                      min={1}
+                      max={ciaPlotSettings.maxAverageWindow}
+                      value={ciaPlotSettings.averageWindow}
+                      onChange={(e) =>
+                        ciaPlotSettings.onAverageWindowChange(
+                          Number(e.target.value)
+                        )
+                      }
+                      aria-label="CIA running average window"
+                      className="w-full accent-cyan-400"
+                    />
+                  </label>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -4,14 +4,13 @@ A cybersecurity simulation visualizer for analyzing red team vs. blue team scena
 
 <img width="1590" height="1098" alt="image" src="https://github.com/user-attachments/assets/b296eb01-0cef-4277-9291-aa16bc083bcb" />
 
-
 ## Features
 
 - **Network Topology Visualization**: Interactive 2D view of a multi-subnet network (User, Enterprise, and Operational subnets) using deck.gl
 - **Attack/Defense Playback**: Step through simulated attack and defense trajectories chronologically
 - **Node State Tracking**: Color-coded host states showing clean, compromised (user/root access), and restored nodes
 - **Action History**: View red team attacks (ExploitRemoteService, PrivilegeEscalate, Impact) and blue team defenses (Restore)
-- **Security Metrics Dashboard**: Track CIA (Confidentiality, Integrity, Availability) and Resilience scores
+- **Security Metrics Dashboard**: Track current CIA/Resilience scores and cumulative CIA trends over time
 
 ## Getting Started
 
