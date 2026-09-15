@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { MetricScore, StepState } from '../trajectory/types';
+import { EyeIcon } from './EyeIcon';
 
 type MetricTimelineProps = {
   scores: MetricScore[];
@@ -12,6 +13,13 @@ type Series = {
   key: keyof MetricScore;
   label: string;
   color: string;
+};
+
+type MetricKey = keyof MetricScore | 'Reward';
+
+type HoveredMetric = {
+  key: MetricKey;
+  step: number;
 };
 
 const SERIES: Series[] = [
@@ -34,12 +42,31 @@ const xAt = (step: number, length: number): number =>
 const plotBounds = (values: number[]) => {
   const minimum = Math.min(0, ...values);
   const maximum = Math.max(0, ...values);
-  const padding = Math.max((maximum - minimum) * 0.08, 1);
-  return { minimum: minimum - padding, maximum: maximum + padding };
+  if (minimum === maximum) return { minimum: -2, maximum: 2 };
+
+  const targetStep = (maximum - minimum) / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(targetStep));
+  const candidates = [1, 2, 2.5, 5, 10, 20, 25, 50].map(
+    (factor) => factor * magnitude
+  );
+  const step =
+    candidates.find(
+      (candidate) =>
+        candidate >= targetStep &&
+        Math.ceil(maximum / candidate) - Math.floor(minimum / candidate) <= 4
+    ) ?? candidates[candidates.length - 1];
+  const lower = Math.floor(minimum / step) * step;
+  return { minimum: lower, maximum: lower + 4 * step };
 };
 
 const yAt = (value: number, minimum: number, maximum: number): number =>
   PADDING + ((maximum - value) / (maximum - minimum)) * (HEIGHT - 2 * PADDING);
+
+const axisTicks = (minimum: number, maximum: number): number[] =>
+  Array.from(
+    { length: 5 },
+    (_, index) => maximum - (index * (maximum - minimum)) / 4
+  );
 
 const seriesPath = (
   scores: MetricScore[],
@@ -79,6 +106,37 @@ const rewardPath = (
 const cumulativeRewardAt = (state: StepState | undefined): number | null =>
   state ? (Object.values(state.cumulative_reward)[0] ?? null) : null;
 
+const SeriesLegend = ({
+  label,
+  color,
+  value,
+  visible,
+  onToggle,
+}: {
+  label: string;
+  color: string;
+  value: string;
+  visible: boolean;
+  onToggle: () => void;
+}) => (
+  <span className="flex items-center gap-1.5 text-slate-300">
+    <button
+      type="button"
+      aria-label={`${visible ? 'Hide' : 'Show'} ${label} line`}
+      aria-pressed={visible}
+      title={`${visible ? 'Hide' : 'Show'} ${label} line`}
+      onClick={onToggle}
+      className="pointer-events-auto shrink-0 cursor-pointer hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400"
+      style={{ color: visible ? color : '#94a3b8' }}
+    >
+      <EyeIcon visible={visible} className="w-3.5 h-3.5" />
+    </button>
+    <span className={visible ? '' : 'opacity-50'}>
+      {label} {value}
+    </span>
+  </span>
+);
+
 export const MetricTimeline = ({
   scores,
   stepStates,
@@ -86,6 +144,18 @@ export const MetricTimeline = ({
   totalSteps,
 }: MetricTimelineProps) => {
   const [expanded, setExpanded] = useState(true);
+  const [hoveredMetric, setHoveredMetric] = useState<HoveredMetric | null>(
+    null
+  );
+  const [visibleSeries, setVisibleSeries] = useState<
+    Record<MetricKey, boolean>
+  >({
+    C: true,
+    I: true,
+    A: true,
+    Resilience: true,
+    Reward: true,
+  });
   const availableScores = useMemo(
     () => scores.slice(0, totalSteps),
     [scores, totalSteps]
@@ -135,15 +205,62 @@ export const MetricTimeline = ({
   const hasReward = rewardValues.some((value) => value !== null);
   const selectedX = xAt(selectedStep, totalSteps);
   const zeroY = yAt(0, minimum, maximum);
-  const rewardZeroY = yAt(0, rewardBounds.minimum, rewardBounds.maximum);
+  const scoreTicks = axisTicks(minimum, maximum);
+  const rewardTicks = axisTicks(rewardBounds.minimum, rewardBounds.maximum);
+  const hoveredValue =
+    hoveredMetric === null
+      ? null
+      : hoveredMetric.key === 'Reward'
+        ? rewardValues[hoveredMetric.step]
+        : availableScores[hoveredMetric.step]?.[hoveredMetric.key];
+  const hoveredSeries = SERIES.find(({ key }) => key === hoveredMetric?.key);
+  const hoveredColor =
+    hoveredMetric?.key === 'Reward' ? REWARD_COLOR : hoveredSeries?.color;
+  const hoveredLabel =
+    hoveredMetric?.key === 'Reward'
+      ? 'Cumulative Blue reward'
+      : hoveredSeries?.label;
+  const hoveredX =
+    hoveredMetric === null ? 0 : xAt(hoveredMetric.step, totalSteps);
+  const hoveredY =
+    hoveredValue === null || hoveredValue === undefined
+      ? 0
+      : hoveredMetric?.key === 'Reward'
+        ? yAt(hoveredValue, rewardBounds.minimum, rewardBounds.maximum)
+        : yAt(hoveredValue, minimum, maximum);
+
+  const showHover = (
+    key: HoveredMetric['key'],
+    clientX: number,
+    chart: SVGSVGElement | null
+  ) => {
+    if (!chart) return;
+    const bounds = chart.getBoundingClientRect();
+    const position = Math.min(
+      1,
+      Math.max(0, (clientX - bounds.left) / bounds.width)
+    );
+    const step = Math.round(position * (totalSteps - 1));
+    setHoveredMetric((previous) =>
+      previous?.key === key && previous.step === step ? previous : { key, step }
+    );
+  };
+
+  const toggleSeries = (key: MetricKey) => {
+    setVisibleSeries((previous) => ({
+      ...previous,
+      [key]: !previous[key],
+    }));
+    setHoveredMetric(null);
+  };
 
   return (
     <section
-      className="bg-slate-900 py-2"
+      className="col-span-2 row-start-1 grid grid-cols-subgrid min-w-0 bg-slate-900 pb-2"
       aria-label="CIA and Resilience over time"
       data-testid="metric-timeline"
     >
-      <div className="flex items-center gap-3">
+      <div className="relative col-span-2">
         <button
           type="button"
           aria-label={
@@ -151,73 +268,86 @@ export const MetricTimeline = ({
           }
           aria-expanded={expanded}
           aria-controls="metric-timeline-plot"
-          onClick={() => setExpanded((previous) => !previous)}
-          className="text-lg leading-none text-slate-300 hover:text-white cursor-pointer shrink-0"
-        >
-          <span aria-hidden="true">{expanded ? '▾' : '▸'}</span>
-        </button>
-        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
-          {SERIES.map(({ key, label, color }) => (
-            <span
-              key={key}
-              className="flex items-center gap-1.5 text-slate-300"
-            >
-              <span
-                className="inline-block w-3 h-0.5"
-                style={{ backgroundColor: color }}
-                aria-hidden="true"
+          onClick={() => {
+            setExpanded((previous) => !previous);
+            setHoveredMetric(null);
+          }}
+          className="absolute inset-0 w-full cursor-pointer hover:bg-slate-800/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400"
+        />
+        <div className="relative flex items-center gap-3 px-4 pt-1 text-left text-slate-300 pointer-events-none">
+          <span
+            aria-hidden="true"
+            className="shrink-0 -translate-y-0.5 text-lg leading-none"
+          >
+            {expanded ? '▾' : '▸'}
+          </span>
+          <span className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
+            {SERIES.map(({ key, label, color }) => (
+              <SeriesLegend
+                key={key}
+                label={label}
+                color={color}
+                value={selectedScore ? formatValue(selectedScore[key]) : 'N/A'}
+                visible={visibleSeries[key]}
+                onToggle={() => toggleSeries(key)}
               />
-              {label} {selectedScore ? formatValue(selectedScore[key]) : 'N/A'}
-            </span>
-          ))}
-          {hasReward && (
-            <span
-              className="flex items-center gap-1.5 text-slate-300"
-              title="Cumulative Blue reward uses the right vertical scale"
-            >
-              <span
-                className="inline-block w-3 h-0.5"
-                style={{ backgroundColor: REWARD_COLOR }}
-                aria-hidden="true"
+            ))}
+            {hasReward && (
+              <SeriesLegend
+                label="Reward total"
+                color={REWARD_COLOR}
+                value={
+                  selectedReward === null ? 'N/A' : formatValue(selectedReward)
+                }
+                visible={visibleSeries.Reward}
+                onToggle={() => toggleSeries('Reward')}
               />
-              Reward total{' '}
-              {selectedReward === null ? 'N/A' : formatValue(selectedReward)}
-            </span>
-          )}
+            )}
+          </span>
         </div>
       </div>
 
       {expanded && (
-        <div id="metric-timeline-plot" data-testid="metric-timeline-plot">
+        <div
+          id="metric-timeline-plot"
+          data-testid="metric-timeline-plot"
+          className="col-start-1 min-w-0 pl-4"
+        >
           <div className="relative mt-2 h-32">
-            <div className="absolute right-full mr-2 top-0 bottom-0 text-right text-xs text-slate-500 w-12">
-              <span className="absolute right-0 top-0">
-                {formatValue(maximum)}
-              </span>
-              <span
-                className="absolute right-0"
-                style={{ top: `${(zeroY / HEIGHT) * 100}%` }}
-              >
-                0
-              </span>
-              <span className="absolute right-0 bottom-0">
-                {formatValue(minimum)}
-              </span>
-            </div>
-            {hasReward && (
-              <div className="absolute right-1 top-0 bottom-0 z-10 text-right text-xs text-rose-300 pointer-events-none">
-                <span className="absolute right-0 top-0">
-                  {formatValue(rewardBounds.maximum)}
-                </span>
+            <div
+              className="absolute right-full mr-2 top-0 bottom-0 w-12 text-right text-xs text-slate-400 pointer-events-none"
+              aria-label="CIA and Resilience score scale"
+              data-testid="metric-score-axis"
+            >
+              {scoreTicks.map((value, index) => (
                 <span
-                  className="absolute right-0"
-                  style={{ top: `${(rewardZeroY / HEIGHT) * 100}%` }}
+                  key={index}
+                  className="absolute right-0 -translate-y-1/2"
+                  style={{
+                    top: `${(yAt(value, minimum, maximum) / HEIGHT) * 100}%`,
+                  }}
                 >
-                  0
+                  {formatValue(value)}
                 </span>
-                <span className="absolute right-0 bottom-0">
-                  {formatValue(rewardBounds.minimum)}
-                </span>
+              ))}
+            </div>
+            {hasReward && visibleSeries.Reward && (
+              <div
+                className="absolute left-full ml-2 top-0 bottom-0 w-12 text-left text-xs text-rose-300 pointer-events-none"
+                aria-label="Cumulative Blue reward scale"
+                data-testid="metric-reward-axis"
+              >
+                {rewardTicks.map((value, index) => (
+                  <span
+                    key={index}
+                    className="absolute left-0 -translate-y-1/2"
+                    style={{
+                      top: `${(yAt(value, rewardBounds.minimum, rewardBounds.maximum) / HEIGHT) * 100}%`,
+                    }}
+                  >
+                    {formatValue(value)}
+                  </span>
+                ))}
               </div>
             )}
             <svg
@@ -227,7 +357,22 @@ export const MetricTimeline = ({
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
               preserveAspectRatio="none"
               className="h-full w-full overflow-visible"
+              onPointerLeave={() => setHoveredMetric(null)}
             >
+              {scoreTicks.map((value, index) => (
+                <line
+                  key={index}
+                  x1="0"
+                  x2={WIDTH}
+                  y1={yAt(value, minimum, maximum)}
+                  y2={yAt(value, minimum, maximum)}
+                  stroke="#475569"
+                  strokeWidth="1"
+                  strokeOpacity="0.4"
+                  vectorEffect="non-scaling-stroke"
+                  pointerEvents="none"
+                />
+              ))}
               <line
                 x1="0"
                 x2={WIDTH}
@@ -237,20 +382,24 @@ export const MetricTimeline = ({
                 strokeWidth="1"
                 strokeDasharray="5 5"
                 vectorEffect="non-scaling-stroke"
+                pointerEvents="none"
               />
-              {paths.map(({ key, color, path }) => (
-                <path
-                  key={key}
-                  data-series={key}
-                  d={path}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  vectorEffect="non-scaling-stroke"
-                />
-              ))}
-              {hasReward && (
+              {paths
+                .filter(({ key }) => visibleSeries[key])
+                .map(({ key, color, path }) => (
+                  <path
+                    key={key}
+                    data-series={key}
+                    d={path}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    pointerEvents="none"
+                  />
+                ))}
+              {hasReward && visibleSeries.Reward && (
                 <path
                   data-series="Reward"
                   d={totalRewardPath}
@@ -259,6 +408,7 @@ export const MetricTimeline = ({
                   strokeWidth="2"
                   strokeLinejoin="round"
                   vectorEffect="non-scaling-stroke"
+                  pointerEvents="none"
                 />
               )}
               <line
@@ -270,12 +420,73 @@ export const MetricTimeline = ({
                 stroke="#e2e8f0"
                 strokeWidth="1"
                 vectorEffect="non-scaling-stroke"
+                pointerEvents="none"
               />
+              {paths
+                .filter(({ key }) => visibleSeries[key])
+                .map(({ key, path }) => (
+                  <path
+                    key={key}
+                    d={path}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth="14"
+                    vectorEffect="non-scaling-stroke"
+                    pointerEvents="stroke"
+                    onPointerMove={(event) =>
+                      showHover(
+                        key,
+                        event.clientX,
+                        event.currentTarget.ownerSVGElement
+                      )
+                    }
+                    onPointerLeave={() => setHoveredMetric(null)}
+                  />
+                ))}
+              {hasReward && visibleSeries.Reward && (
+                <path
+                  d={totalRewardPath}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth="14"
+                  vectorEffect="non-scaling-stroke"
+                  pointerEvents="stroke"
+                  onPointerMove={(event) =>
+                    showHover(
+                      'Reward',
+                      event.clientX,
+                      event.currentTarget.ownerSVGElement
+                    )
+                  }
+                  onPointerLeave={() => setHoveredMetric(null)}
+                />
+              )}
             </svg>
-          </div>
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>1</span>
-            <span>{totalSteps}</span>
+            {hoveredMetric !== null &&
+              hoveredValue !== null &&
+              hoveredValue !== undefined && (
+                <div
+                  className="absolute z-20 pointer-events-none"
+                  style={{
+                    left: `${(hoveredX / WIDTH) * 100}%`,
+                    top: `${(hoveredY / HEIGHT) * 100}%`,
+                  }}
+                >
+                  <span
+                    role="tooltip"
+                    data-testid="metric-timeline-tooltip"
+                    className={`absolute bottom-2 whitespace-nowrap rounded-sm border border-slate-600 bg-slate-950 px-1.5 py-0.5 text-[10px] leading-none text-slate-100 shadow-sm ${hoveredX / WIDTH < 0.15 ? 'left-0' : hoveredX / WIDTH > 0.85 ? 'right-0' : 'left-1/2 -translate-x-1/2'}`}
+                  >
+                    {hoveredLabel} {formatValue(hoveredValue)}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    data-testid="metric-timeline-dot"
+                    className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-900"
+                    style={{ backgroundColor: hoveredColor }}
+                  />
+                </div>
+              )}
           </div>
         </div>
       )}

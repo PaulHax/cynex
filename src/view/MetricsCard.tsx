@@ -1,11 +1,6 @@
-import type {
-  MetricScore,
-  RewardBreakdown,
-  StepState,
-} from '../trajectory/types';
+import type { RewardBreakdown, StepState } from '../trajectory/types';
 
 type MetricsCardProps = {
-  score?: MetricScore;
   stepState?: StepState;
 };
 
@@ -51,8 +46,8 @@ const rewardBreakdownEntries = (
     ['Action cost', breakdown.action_cost],
   ].filter((entry): entry is [string, number] => entry[1] !== undefined);
 
-export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
-  if (!score && !stepState) return null;
+export const MetricsCard = ({ stepState }: MetricsCardProps) => {
+  if (!stepState) return null;
 
   const stepReward = firstValue(stepState?.rewards);
   const cumulativeReward = firstValue(stepState?.cumulative_reward);
@@ -89,18 +84,6 @@ export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
           {breakdownEntries.map(([label, value]) => (
             <MetricValue key={label} label={label} value={value} signed />
           ))}
-        </div>
-      )}
-
-      {score && (
-        <div
-          className="mt-2 pt-2 border-t border-slate-600/70 flex items-center justify-end gap-4"
-          data-testid="cia-metrics"
-        >
-          <MetricValue label="C" value={score.C} />
-          <MetricValue label="I" value={score.I} />
-          <MetricValue label="A" value={score.A} />
-          <MetricValue label="R" value={score.Resilience} />
         </div>
       )}
     </div>
