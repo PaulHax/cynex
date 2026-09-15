@@ -104,18 +104,23 @@ test.describe('Co-training telemetry', () => {
     await thumb.hover();
     await page.mouse.down();
     await expect(page.locator('html')).toHaveClass(/is-scrubbing/);
+    const cursorShield = page.locator('[data-scrubbing-cursor-shield]');
+    await expect(cursorShield).toBeVisible();
 
     for (const x of [box.x - 80, box.x + 80, box.x + 160]) {
       await page.mouse.move(x, box.y + box.height / 2);
-      const cursor = await page.evaluate(() =>
-        getComputedStyle(document.elementFromPoint(10, 10)!).getPropertyValue(
-          'cursor'
-        )
-      );
-      expect(cursor).toBe('grabbing');
+      const cursorState = await page.evaluate(() => {
+        const element = document.elementFromPoint(10, 10);
+        return {
+          isShield: element?.hasAttribute('data-scrubbing-cursor-shield'),
+          cursor: element ? getComputedStyle(element).cursor : null,
+        };
+      });
+      expect(cursorState).toEqual({ isShield: true, cursor: 'grabbing' });
     }
 
     await page.mouse.up();
     await expect(page.locator('html')).not.toHaveClass(/is-scrubbing/);
+    await expect(cursorShield).toHaveCount(0);
   });
 });
