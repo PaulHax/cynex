@@ -55,19 +55,17 @@ export const StepControls = ({
   return (
     <div
       data-testid="timeline-controls"
-      className="relative z-30 shrink-0 bg-slate-900 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-2"
+      className={`relative z-30 shrink-0 bg-slate-900 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 ${metricScores.length > 0 ? 'pb-2' : 'py-2'}`}
     >
       {metricScores.length > 0 && (
-        <div className="col-start-1 row-start-1 min-w-0">
-          <MetricTimeline
-            scores={metricScores}
-            stepStates={stepStates}
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-          />
-        </div>
+        <MetricTimeline
+          scores={metricScores}
+          stepStates={stepStates}
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+        />
       )}
-      <div className={`col-start-1 ${sliderRow} min-w-0`}>
+      <div className={`col-start-1 ${sliderRow} min-w-0 pl-4`}>
         <StepSlider
           min={0}
           max={Math.max(0, totalSteps - 1)}
@@ -75,7 +73,7 @@ export const StepControls = ({
           onChange={onStepChange}
         />
       </div>
-      <div className={`col-start-2 ${sliderRow} relative`}>
+      <div className={`col-start-2 ${sliderRow} relative pr-4`}>
         <button
           ref={buttonRef}
           className="p-2 bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-slate-100 rounded transition-colors"
@@ -105,7 +103,7 @@ export const StepControls = ({
         {showSettings && (
           <div
             ref={popoverRef}
-            className="absolute bottom-full right-0 mb-2 bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl min-w-[200px]"
+            className="absolute bottom-full right-0 z-50 mb-2 bg-slate-800 border border-slate-600 rounded-lg p-3 shadow-xl min-w-[200px]"
           >
             <label className="text-xs text-slate-400 block mb-1">
               Trace lookback steps: {trailLength}

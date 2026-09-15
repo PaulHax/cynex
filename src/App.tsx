@@ -271,8 +271,6 @@ const App = () => {
       ]
     : undefined;
 
-  const currentScore = trajectory?.metricScores[currentStep];
-
   if (initialLoading) {
     return (
       <div className="h-full bg-slate-900 flex items-center justify-center">
@@ -354,7 +352,6 @@ const App = () => {
                 <ActionPanel
                   currentStep={currentStep}
                   totalSteps={totalSteps}
-                  score={currentScore}
                   stepState={currentStepState}
                   onStepChange={setCurrentStep}
                   agentVisibility={agentVisibility}

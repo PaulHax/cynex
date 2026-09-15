@@ -1,4 +1,4 @@
-import type { AgentAction, MetricScore, StepState } from '../trajectory/types';
+import type { AgentAction, StepState } from '../trajectory/types';
 import type { AgentVisibility } from '../App';
 import { MetricsCard } from './MetricsCard';
 import { ActionHistory } from './ActionHistory';
@@ -6,7 +6,6 @@ import { ActionHistory } from './ActionHistory';
 type ActionPanelProps = {
   currentStep: number;
   totalSteps: number;
-  score?: MetricScore;
   stepState?: StepState;
   onStepChange: (step: number) => void;
   agentVisibility: AgentVisibility;
@@ -19,7 +18,6 @@ type ActionPanelProps = {
 export const ActionPanel = ({
   currentStep,
   totalSteps,
-  score,
   stepState,
   onStepChange,
   agentVisibility,
@@ -29,12 +27,8 @@ export const ActionPanel = ({
   redAgents,
 }: ActionPanelProps) => (
   <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4 w-full h-full flex flex-col">
-    <div className="text-lg font-bold text-slate-100 pb-3 text-center">
-      Step {currentStep + 1} / {totalSteps}
-    </div>
-
     <div className="mb-3">
-      <MetricsCard score={score} stepState={stepState} />
+      <MetricsCard stepState={stepState} />
     </div>
 
     <ActionHistory

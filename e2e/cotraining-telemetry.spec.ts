@@ -31,10 +31,16 @@ test.describe('Co-training telemetry', () => {
     await expect(page.getByText('R5').first()).toBeVisible();
 
     const metrics = page.getByTestId('metrics-card');
+    await expect(metrics.locator('..').locator('..')).not.toContainText(
+      'Step 1 / 2'
+    );
+    await expect(page.getByTestId('playback-controls')).toContainText(
+      'Step 1 / 2'
+    );
     await expect(metrics).toContainText('Phase 2');
     await expect(metrics).toContainText('Reward -3.5');
     await expect(metrics).toContainText('Total -12.25');
-    await expect(metrics).toContainText('R -20');
+    await expect(metrics).not.toContainText('C -10');
     const primaryRows = await page
       .getByTestId('primary-metrics')
       .locator(':scope > span')
@@ -42,10 +48,9 @@ test.describe('Co-training telemetry', () => {
         (elements) => new Set(elements.map((element) => element.offsetTop)).size
       );
     expect(primaryRows).toBe(1);
-    await expect(page.getByTestId('cia-metrics')).toContainText('C -10');
-    await expect(page.getByTestId('cia-metrics')).toContainText('I -20');
-    await expect(page.getByTestId('cia-metrics')).toContainText('A -30');
-    await expect(page.getByTestId('cia-metrics')).toContainText('R -20');
+    await expect(page.getByTestId('metric-timeline')).toContainText(
+      'Confidentiality -10'
+    );
 
     const breakdown = page.getByTestId('reward-breakdown');
     await expect(breakdown).toBeVisible();
@@ -55,9 +60,53 @@ test.describe('Co-training telemetry', () => {
     await expect(breakdown).toContainText('ASF -0.5');
     await expect(breakdown).toContainText('Action cost 0');
     const breakdownBox = await breakdown.boundingBox();
-    const ciaBox = await page.getByTestId('cia-metrics').boundingBox();
-    if (!breakdownBox || !ciaBox) throw new Error('Metrics rows not found');
-    expect(breakdownBox.y).toBeLessThan(ciaBox.y);
+    const primaryBox = await page.getByTestId('primary-metrics').boundingBox();
+    if (!breakdownBox || !primaryBox) throw new Error('Metrics rows not found');
+    expect(primaryBox.y).toBeLessThan(breakdownBox.y);
+  });
+
+  test('shows green agent work outcomes on host hover', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    const fixture = JSON.parse(await readFile(fixturePath, 'utf8'));
+    fixture.green_agents = ['green_agent_0'];
+    fixture.agent_actions.green_agent_0 = [
+      {
+        step: 0,
+        Action: 'GreenAccessService',
+        Status: 'TRUE',
+        Host: 'op_server_host_0',
+        Params: {},
+      },
+      {
+        step: 1,
+        Action: 'GreenAccessService',
+        Status: 'FALSE',
+        Host: 'op_server_host_0',
+        Params: {},
+      },
+    ];
+
+    await page.goto('/');
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Load File' }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+      name: 'green-work-trajectory.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(fixture)),
+    });
+    await page.locator('canvas').waitFor();
+    await page.screenshot();
+
+    await page.mouse.move(748, 150);
+    const tooltip = page.getByTestId('host-tooltip');
+    await expect(tooltip).toContainText('op_server_host_0');
+    await expect(tooltip).toContainText('Green agent work: Successful');
+
+    await page.getByTitle('Next step').click();
+    await page.mouse.move(650, 300);
+    await page.mouse.move(748, 150);
+    await expect(tooltip).toContainText('Green agent work: Failed');
   });
 
   test('maps dynamic resilience roles to host icon roles', async ({ page }) => {
@@ -149,12 +198,58 @@ test.describe('Co-training telemetry', () => {
     await expect(toggle).toHaveAccessibleName('Collapse metrics graph');
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(chart).toBeVisible();
+    const legendBox = await toggle.boundingBox();
+    const controlsBox = await page
+      .getByTestId('timeline-controls')
+      .boundingBox();
+    if (!legendBox || !controlsBox)
+      throw new Error('Metrics legend not visible');
+    expect(legendBox.height).toBeLessThanOrEqual(24);
+    expect(Math.abs(legendBox.x - controlsBox.x)).toBeLessThanOrEqual(1);
+    expect(Math.abs(legendBox.width - controlsBox.width)).toBeLessThanOrEqual(
+      1
+    );
+    expect(Math.abs(legendBox.y - controlsBox.y)).toBeLessThanOrEqual(1);
+    await expect(toggle).toHaveCSS('border-top-left-radius', '0px');
+    await page.mouse.click(legendBox.x + legendBox.width - 8, legendBox.y + 2);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const collapsedLegendBox = await toggle.boundingBox();
+    if (!collapsedLegendBox) throw new Error('Collapsed legend not visible');
+    await page.mouse.click(
+      collapsedLegendBox.x + collapsedLegendBox.width - 8,
+      collapsedLegendBox.y + 2
+    );
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(timeline).toContainText('Confidentiality -10');
     await expect(timeline).toContainText('Integrity -20');
     await expect(timeline).toContainText('Availability -30');
     await expect(timeline).toContainText('Resilience -20');
     await expect(timeline).toContainText('Reward total -12.25');
     await expect(chart.locator('path[data-series]')).toHaveCount(5);
+    await timeline
+      .getByRole('button', { name: 'Hide Confidentiality line' })
+      .click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(chart.locator('path[data-series="C"]')).toHaveCount(0);
+    await timeline
+      .getByRole('button', { name: 'Show Confidentiality line' })
+      .click();
+    await expect(chart.locator('path[data-series="C"]')).toHaveCount(1);
+    await timeline
+      .getByRole('button', { name: 'Hide Reward total line' })
+      .click();
+    await expect(chart.locator('path[data-series="Reward"]')).toHaveCount(0);
+    await expect(page.getByTestId('metric-reward-axis')).toHaveCount(0);
+    await timeline
+      .getByRole('button', { name: 'Show Reward total line' })
+      .click();
+    await expect(chart.locator('path[data-series="Reward"]')).toHaveCount(1);
+    await expect(
+      page.getByTestId('metric-score-axis').locator('span')
+    ).toHaveText(['10', '0', '-10', '-20', '-30']);
+    await expect(
+      page.getByTestId('metric-reward-axis').locator('span')
+    ).toHaveText(['5', '0', '-5', '-10', '-15']);
     for (const key of ['C', 'I', 'A', 'Resilience', 'Reward']) {
       await expect(chart.locator(`path[data-series="${key}"]`)).toHaveAttribute(
         'd',
@@ -172,6 +267,37 @@ test.describe('Co-training telemetry', () => {
     expect(Math.abs(chartBox.x - trackBox.x)).toBeLessThanOrEqual(1);
     expect(Math.abs(chartBox.width - trackBox.width)).toBeLessThanOrEqual(1);
 
+    const cLineBox = await chart.locator('path[data-series="C"]').boundingBox();
+    if (!cLineBox) throw new Error('Confidentiality line not visible');
+    await page.mouse.move(
+      cLineBox.x + cLineBox.width * 0.9,
+      cLineBox.y + cLineBox.height * 0.1
+    );
+    const tooltip = page.getByTestId('metric-timeline-tooltip');
+    await expect(tooltip).toHaveText('Confidentiality -5');
+    await expect(page.getByTestId('metric-timeline-dot')).toBeVisible();
+    const tooltipBox = await tooltip.boundingBox();
+    if (!tooltipBox) throw new Error('Metric tooltip not visible');
+    expect(tooltipBox.width).toBeLessThan(180);
+    expect(tooltipBox.height).toBeLessThan(25);
+    expect(tooltipBox.x + tooltipBox.width).toBeLessThanOrEqual(
+      controlsBox.x + controlsBox.width
+    );
+    await page.mouse.move(chartBox.x + chartBox.width / 2, chartBox.y + 30);
+    await expect(tooltip).toHaveCount(0);
+
+    const rewardLineBox = await chart
+      .locator('path[data-series="Reward"]')
+      .boundingBox();
+    if (!rewardLineBox) throw new Error('Reward line not visible');
+    await page.mouse.move(
+      rewardLineBox.x + rewardLineBox.width * 0.9,
+      rewardLineBox.y + rewardLineBox.height * 0.9
+    );
+    await expect(tooltip).toHaveText('Cumulative Blue reward -14.25');
+    await page.mouse.move(chartBox.x + chartBox.width / 2, chartBox.y + 30);
+    await expect(tooltip).toHaveCount(0);
+
     await page.locator('button[title="Next step"]').click();
     await expect(
       page.getByText('Step 2 / 2', { exact: true }).last()
@@ -183,14 +309,38 @@ test.describe('Co-training telemetry', () => {
       page.getByTestId('metric-timeline-marker')
     ).not.toHaveAttribute('x1', firstMarker ?? '');
 
-    await toggle.click();
+    const metricTextBox = await timeline
+      .getByText('Confidentiality -5')
+      .boundingBox();
+    if (!metricTextBox) throw new Error('Metrics legend text not visible');
+    await page.mouse.click(
+      metricTextBox.x + metricTextBox.width / 2,
+      metricTextBox.y + metricTextBox.height / 2
+    );
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await expect(toggle).toHaveAccessibleName('Expand metrics graph');
     await expect(chart).toHaveCount(0);
     await expect(timeline).toContainText('Confidentiality -5');
     await expect(page.locator('[data-thumb="step"]')).toBeVisible();
-    await toggle.click();
+    await toggle.press('Enter');
     await expect(chart).toBeVisible();
+  });
+
+  test('keeps trail settings above the expanded graph', async ({ page }) => {
+    await loadFixture(page);
+    await page.getByTitle('Trail settings').click();
+
+    const popover = page
+      .getByText('Trace lookback steps:', { exact: false })
+      .locator('..');
+    await expect(popover).toBeVisible();
+    const appearance = await popover.evaluate((element) => ({
+      background: getComputedStyle(element).backgroundColor,
+      zIndex: Number(getComputedStyle(element).zIndex),
+    }));
+    expect(appearance.background).not.toBe('transparent');
+    expect(appearance.background).not.toBe('rgba(0, 0, 0, 0)');
+    expect(appearance.zIndex).toBeGreaterThan(20);
   });
 
   test('graph disclosure changes map height without shrinking the sidebar', async ({
@@ -218,7 +368,9 @@ test.describe('Co-training telemetry', () => {
       playbackBox.y
     );
 
-    await page.getByRole('button', { name: 'Collapse metrics graph' }).click();
+    await page
+      .getByRole('button', { name: 'Collapse metrics graph' })
+      .press('Enter');
     const sidebarAfter = await sidebar.boundingBox();
     const mapAfter = await map.boundingBox();
     if (!sidebarAfter || !mapAfter)
