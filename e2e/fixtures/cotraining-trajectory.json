@@ -1,0 +1,68 @@
+{
+  "format_version": "2.0",
+  "challenge": "CC4 co-training",
+  "episode": 7,
+  "seed": 42,
+  "total_steps": 2,
+  "experiment_time": "2026-09-14T00:00:00Z",
+  "blue_agents": ["blue_agent_0", "blue_agent_1", "blue_agent_2", "blue_agent_3", "blue_agent_4"],
+  "red_agents": ["red_agent_0", "red_agent_1", "red_agent_2", "red_agent_3", "red_agent_4", "red_agent_5"],
+  "green_agents": [],
+  "network_topology": {
+    "op_server_host_0": {
+      "Interface": [],
+      "Sessions": [],
+      "Processes": [],
+      "User Info": [],
+      "System info": {"Hostname": "op_server_host_0", "OSType": "LINUX", "OSDistribution": "Ubuntu", "OSVersion": "22.04", "Architecture": "x86_64"}
+    },
+    "op_server_host_1": {
+      "Interface": [],
+      "Sessions": [],
+      "Processes": [],
+      "User Info": [],
+      "System info": {"Hostname": "op_server_host_1", "OSType": "LINUX", "OSDistribution": "Ubuntu", "OSVersion": "22.04", "Architecture": "x86_64"}
+    },
+    "op_server_host_2": {
+      "Interface": [],
+      "Sessions": [],
+      "Processes": [],
+      "User Info": [],
+      "System info": {"Hostname": "op_server_host_2", "OSType": "LINUX", "OSDistribution": "Ubuntu", "OSVersion": "22.04", "Architecture": "x86_64"}
+    }
+  },
+  "subnet_metadata": {
+    "op": {"label": "Operational", "network_address": "10.0.0.0", "netmask": "255.255.255.0", "nacl_connections": []}
+  },
+  "host_resilience_roles": {
+    "op_server_host_0": 1,
+    "op_server_host_1": 2,
+    "op_server_host_2": 3
+  },
+  "agent_actions": {
+    "blue_agent_0": [{"step": 0, "Action": "Monitor", "Status": "TRUE", "Host": "op_server_host_0", "Params": {}}],
+    "blue_agent_1": [{"step": 0, "Action": "Analyse", "Status": "TRUE", "Host": "op_server_host_1", "Params": {}}],
+    "blue_agent_2": [{"step": 0, "Action": "Remove", "Status": "TRUE", "Host": "op_server_host_2", "Params": {}}],
+    "blue_agent_3": [{"step": 0, "Action": "Monitor", "Status": "TRUE", "Host": "op_server_host_0", "Params": {}}],
+    "blue_agent_4": [{"step": 0, "Action": "Analyse", "Status": "TRUE", "Host": "op_server_host_1", "Params": {}}],
+    "red_agent_0": [{"step": 0, "Action": "Impact", "Status": "TRUE", "Host": "op_server_host_0", "Params": {}}],
+    "red_agent_1": [{"step": 0, "Action": "DiscoverNetworkServices", "Status": "TRUE", "Host": "op_server_host_1", "Params": {}}],
+    "red_agent_2": [{"step": 0, "Action": "PrivilegeEscalate", "Status": "TRUE", "Host": "op_server_host_2", "Params": {}}],
+    "red_agent_3": [{"step": 0, "Action": "DiscoverNetworkServices", "Status": "TRUE", "Host": "op_server_host_0", "Params": {}}],
+    "red_agent_4": [{"step": 0, "Action": "Impact", "Status": "TRUE", "Host": "op_server_host_1", "Params": {}}],
+    "red_agent_5": [{"step": 0, "Action": "PrivilegeEscalate", "Status": "TRUE", "Host": "op_server_host_2", "Params": {}}]
+  },
+  "step_states": [{
+    "step": 0,
+    "mission_phase": 2,
+    "host_compromise": {"op_server_host_0": "PRIVILEGED", "op_server_host_1": "USER", "op_server_host_2": "NONE"},
+    "rewards": {"blue_agent_0": -3.5},
+    "cumulative_reward": {"blue_agent_0": -12.25},
+    "reward_breakdown": {"ria": -1.0, "lwf": -2.0, "asf": -0.5, "action_cost": 0.0}
+  }],
+  "metric_scores": [{"C": -10.0, "I": -20.0, "A": -30.0, "Resilience": -20.0}],
+  "blue_agent_name": "learned-blue",
+  "red_agent_name": "learned-red",
+  "blue_actions": [],
+  "red_actions": []
+}

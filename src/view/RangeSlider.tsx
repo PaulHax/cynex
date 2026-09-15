@@ -27,6 +27,13 @@ export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
+  const stopDragging = useCallback(() => {
+    draggingRef.current = false;
+    document.documentElement.classList.remove('is-scrubbing');
+  }, []);
+
+  useEffect(() => stopDragging, [stopDragging]);
+
   const getPositionFromEvent = useCallback(
     (clientX: number): number => {
       if (!trackRef.current) return min;
@@ -49,8 +56,9 @@ export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
-    e.currentTarget.setPointerCapture(e.pointerId);
     draggingRef.current = true;
+    document.documentElement.classList.add('is-scrubbing');
+    e.currentTarget.setPointerCapture(e.pointerId);
   }, []);
 
   const handlePointerMove = useCallback(
@@ -60,10 +68,6 @@ export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
     },
     [getPositionFromEvent]
   );
-
-  const handlePointerUp = useCallback(() => {
-    draggingRef.current = false;
-  }, []);
 
   const range = max - min || 1;
   const percent = ((value - min) / range) * 100;
@@ -82,7 +86,9 @@ export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
         data-thumb="step"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
+        onPointerUp={stopDragging}
+        onPointerCancel={stopDragging}
+        onLostPointerCapture={stopDragging}
         className="absolute top-1/2 w-5 h-5 bg-blue-300 hover:bg-blue-200 rounded-full cursor-grab active:cursor-grabbing shadow-md touch-none"
         style={{
           left: `${percent}%`,

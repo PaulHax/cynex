@@ -13,6 +13,15 @@ export type MetricScore = {
   Resilience: number;
 };
 
+export type RewardBreakdown = {
+  ria?: number;
+  lwf?: number;
+  asf?: number;
+  action_cost?: number;
+};
+
+export type ResilienceRole = 1 | 2 | 3;
+
 export type Subnet = {
   network_address: string;
   netmask: string;
@@ -78,6 +87,7 @@ export type StepState = {
   host_compromise: Record<string, 'NONE' | 'USER' | 'PRIVILEGED'>;
   rewards: Record<string, number>;
   cumulative_reward: Record<string, number>;
+  reward_breakdown?: RewardBreakdown;
 };
 
 export type Trajectory = {
@@ -90,6 +100,7 @@ export type Trajectory = {
   greenAgents: string[];
   networkTopology: Record<string, HostInfo>;
   subnetMetadata: Record<string, SubnetMetadata>;
+  hostResilienceRoles: Record<string, ResilienceRole>;
   agentActions: Record<string, AgentAction[]>;
   stepStates: StepState[];
   metricScores: MetricScore[];

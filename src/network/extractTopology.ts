@@ -1,4 +1,8 @@
-import type { HostInfo, SubnetMetadata } from '../trajectory/types';
+import type {
+  HostInfo,
+  ResilienceRole,
+  SubnetMetadata,
+} from '../trajectory/types';
 
 export type HostType = 'workstation' | 'server' | 'defender' | 'router';
 
@@ -52,6 +56,22 @@ const inferHostRole = (hostname: string): HostRole | undefined => {
   return undefined;
 };
 
+const resilienceHostRoles: Record<ResilienceRole, HostRole> = {
+  1: 'auth',
+  2: 'database',
+  3: 'front',
+};
+
+const resolveHostRole = (
+  hostname: string,
+  hostResilienceRoles: Record<string, ResilienceRole>
+): HostRole | undefined => {
+  const assignedRole = hostResilienceRoles[hostname];
+  return assignedRole === undefined
+    ? inferHostRole(hostname)
+    : resilienceHostRoles[assignedRole];
+};
+
 const getNonLoopbackSubnet = (hostInfo: HostInfo): string | null => {
   for (const iface of hostInfo.Interface) {
     if (
@@ -75,7 +95,8 @@ const findSubnetForHost = (
 
 export const extractTopology = (
   networkTopology: Record<string, HostInfo>,
-  subnetMetadata: Record<string, SubnetMetadata>
+  subnetMetadata: Record<string, SubnetMetadata>,
+  hostResilienceRoles: Record<string, ResilienceRole> = {}
 ): ExtractedTopology => {
   const subnetKeys = Object.keys(subnetMetadata);
 
@@ -108,7 +129,10 @@ export const extractTopology = (
         id: hostname,
         subnet: subnetKey ?? 'unknown',
         type,
-        role: type === 'server' ? inferHostRole(hostname) : undefined,
+        role:
+          type === 'server'
+            ? resolveHostRole(hostname, hostResilienceRoles)
+            : undefined,
         x: 0,
         y: 0,
       };
