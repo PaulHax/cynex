@@ -79,8 +79,18 @@ export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
         {cumulativeReward !== undefined && (
           <MetricValue label="Total" value={cumulativeReward} signed />
         )}
-        {score && <MetricValue label="R" value={score.Resilience} />}
       </div>
+
+      {breakdownEntries.length > 0 && (
+        <div
+          className="mt-2 pt-2 border-t border-slate-600/70 flex flex-wrap items-center justify-end gap-x-4 gap-y-1"
+          data-testid="reward-breakdown"
+        >
+          {breakdownEntries.map(([label, value]) => (
+            <MetricValue key={label} label={label} value={value} signed />
+          ))}
+        </div>
+      )}
 
       {score && (
         <div
@@ -90,23 +100,8 @@ export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
           <MetricValue label="C" value={score.C} />
           <MetricValue label="I" value={score.I} />
           <MetricValue label="A" value={score.A} />
+          <MetricValue label="R" value={score.Resilience} />
         </div>
-      )}
-
-      {breakdownEntries.length > 0 && (
-        <details
-          className="mt-2 pt-2 border-t border-slate-600/70"
-          data-testid="reward-breakdown"
-        >
-          <summary className="cursor-pointer text-slate-300 select-none">
-            Reward breakdown
-          </summary>
-          <div className="mt-2 flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
-            {breakdownEntries.map(([label, value]) => (
-              <MetricValue key={label} label={label} value={value} signed />
-            ))}
-          </div>
-        </details>
       )}
     </div>
   );
