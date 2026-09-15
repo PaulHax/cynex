@@ -64,34 +64,41 @@ export const TrajectorySelector = ({
   const hasAvailableFiles = availableFiles.length > 0;
 
   return (
-    <div className="flex items-center gap-2">
-      {hasAvailableFiles && (
-        <select
-          className="bg-slate-700 text-slate-200 px-2 py-1 rounded border border-slate-600 text-sm"
-          value={
-            currentName && availableFiles.includes(currentName)
-              ? currentName
-              : ''
-          }
-          onChange={(e) => handleSelect(e.target.value)}
-          disabled={isLoading}
-        >
-          <option value="">Select...</option>
-          {availableFiles.map((f) => (
-            <option key={f} value={f}>
-              {f.replace('.json', '')}
-            </option>
-          ))}
-        </select>
-      )}
+    <div className="w-full min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
+        {hasAvailableFiles && (
+          <select
+            className="bg-slate-700 text-slate-200 px-2 py-1 rounded border border-slate-600 text-sm min-w-0 flex-1"
+            value={
+              currentName && availableFiles.includes(currentName)
+                ? currentName
+                : ''
+            }
+            onChange={(e) => handleSelect(e.target.value)}
+            disabled={isLoading}
+          >
+            <option value="">Select...</option>
+            {availableFiles.map((f) => (
+              <option key={f} value={f}>
+                {f.replace('.json', '')}
+              </option>
+            ))}
+          </select>
+        )}
 
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isLoading}
-        className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded text-sm disabled:opacity-50"
-      >
-        Load File
-      </button>
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded text-sm disabled:opacity-50 whitespace-nowrap"
+          >
+            Load File
+          </button>
+          <span className="text-slate-500 text-xs whitespace-nowrap">
+            or drag 'n drop
+          </span>
+        </div>
+      </div>
       <input
         ref={fileInputRef}
         type="file"
@@ -99,8 +106,6 @@ export const TrajectorySelector = ({
         onChange={handleFileInput}
         className="hidden"
       />
-
-      <span className="text-slate-500 text-xs">or drag 'n drop</span>
 
       {isLoading && <span className="text-slate-400 text-sm">Loading...</span>}
       {displayError && (
