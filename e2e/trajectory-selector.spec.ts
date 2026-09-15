@@ -1,18 +1,28 @@
 import { test, expect } from '@playwright/test';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import {
+  playbackFixturePath,
+  SHORT_EPISODE,
+  installFixtureRoutes,
+} from './fixtureRoutes';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 test.describe('Trajectory Selector', () => {
   test.beforeEach(async ({ page }) => {
+    await installFixtureRoutes(page);
     await page.goto('/');
+    await expect(page.getByTestId('playback-step-label')).toHaveText(
+      'Step 1 / 100'
+    );
   });
 
   test('shows trajectory dropdown with available files', async ({ page }) => {
     const dropdown = page.getByRole('combobox');
     await expect(dropdown).toBeVisible();
-    await expect(dropdown).toContainText('hosts15-ppo-E0');
+    await expect(dropdown).toContainText('playback-100-E0');
+    await expect(dropdown).toContainText(SHORT_EPISODE);
   });
 
   test('shows load file button', async ({ page }) => {
@@ -23,9 +33,11 @@ test.describe('Trajectory Selector', () => {
     await expect(page.getByText("or drag 'n drop")).toBeVisible();
   });
 
-  test('loads default trajectory on startup', async ({ page }) => {
+  test('loads the checked-in default trajectory on startup', async ({
+    page,
+  }) => {
     await expect(
-      page.getByText('PPO agent vs RedMeanderAgent_Resilience')
+      page.getByText('CC4 co-training — 3 hosts — Episode 7')
     ).toBeVisible();
   });
 
@@ -34,25 +46,30 @@ test.describe('Trajectory Selector', () => {
     await page.getByRole('button', { name: 'Load File' }).click();
     const fileChooser = await fileChooserPromise;
 
-    await fileChooser.setFiles(
-      resolve(__dirname, '../public/data/trajectories/hosts15-ppo-E0.json')
-    );
+    await fileChooser.setFiles(playbackFixturePath);
 
     await expect(
-      page.getByText('PPO agent vs RedMeanderAgent_Resilience')
+      page.getByText('CC4 co-training — 3 hosts — Episode 7')
     ).toBeVisible();
+    await expect(page.getByTestId('playback-step-label')).toHaveText(
+      'Step 1 / 2'
+    );
   });
 
-  test('selecting trajectory from dropdown resets step range', async ({
+  test('selecting another trajectory resets the selected step', async ({
     page,
   }) => {
-    await page.getByRole('button', { name: '▶|' }).click();
-    await expect(page.getByText('Steps 1 - 100 / 100').first()).toBeVisible();
+    await page.getByTitle('Last step').click();
+    await expect(page.getByTestId('playback-step-label')).toHaveText(
+      'Step 100 / 100'
+    );
 
     const dropdown = page.getByRole('combobox');
-    await dropdown.selectOption('hosts15-ppo-E0.json');
+    await dropdown.selectOption(`${SHORT_EPISODE}.json`);
 
-    await expect(page.getByText('Steps 1 - 1 / 100').first()).toBeVisible();
+    await expect(page.getByTestId('playback-step-label')).toHaveText(
+      'Step 1 / 2'
+    );
   });
 
   test('invalid file shows error', async ({ page }) => {
@@ -68,7 +85,7 @@ test.describe('Trajectory Selector', () => {
   });
 
   test('drag zone highlights on drag over', async ({ page }) => {
-    const appContainer = page.locator('.h-full.bg-slate-900').first();
+    const appContainer = page.locator('#root > div');
 
     await appContainer.evaluate((el) => {
       const dataTransfer = new DataTransfer();
