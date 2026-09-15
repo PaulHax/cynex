@@ -73,6 +73,19 @@ const metricScoreSchema = z.object({
   Resilience: z.number(),
 });
 
+const rewardBreakdownSchema = z.object({
+  ria: z.number().optional(),
+  lwf: z.number().optional(),
+  asf: z.number().optional(),
+  action_cost: z.number().optional(),
+});
+
+const resilienceRoleSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+]);
+
 const subnetMetadataSchema = z.object({
   label: z.string(),
   network_address: z.string(),
@@ -86,6 +99,7 @@ const stepStateSchema = z.object({
   host_compromise: z.record(z.string(), z.enum(['NONE', 'USER', 'PRIVILEGED'])),
   rewards: z.record(z.string(), z.number()),
   cumulative_reward: z.record(z.string(), z.number()),
+  reward_breakdown: rewardBreakdownSchema.optional(),
 });
 
 export const trajectoryV1Schema = z.object({
@@ -111,6 +125,7 @@ export const trajectoryV2Schema = z.object({
   green_agents: z.array(z.string()),
   network_topology: z.record(z.string(), hostInfoSchema),
   subnet_metadata: z.record(z.string(), subnetMetadataSchema),
+  host_resilience_roles: z.record(z.string(), resilienceRoleSchema).optional(),
   agent_actions: z.record(z.string(), z.array(agentActionSchema)),
   step_states: z.array(stepStateSchema),
   metric_scores: z.array(metricScoreSchema),

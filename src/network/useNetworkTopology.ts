@@ -24,7 +24,8 @@ export const useNetworkTopology = (
     const compute = async () => {
       const extracted = extractTopology(
         trajectory.networkTopology,
-        trajectory.subnetMetadata
+        trajectory.subnetMetadata,
+        trajectory.hostResilienceRoles
       );
       const result = await computeLayout(extracted, trajectory.layoutDirection);
       if (!cancelled) {

@@ -1,78 +1,113 @@
-import type { MetricScore, StepState } from '../trajectory/types';
+import type {
+  MetricScore,
+  RewardBreakdown,
+  StepState,
+} from '../trajectory/types';
 
 type MetricsCardProps = {
   score?: MetricScore;
   stepState?: StepState;
 };
 
+type MetricValueProps = {
+  label: string;
+  value: number;
+  signed?: boolean;
+};
+
+const formatMetric = (value: number): string =>
+  String(Number(value.toFixed(4)));
+
+const MetricValue = ({ label, value, signed = false }: MetricValueProps) => (
+  <span className="whitespace-nowrap">
+    <span className="text-slate-400">{label}</span>{' '}
+    <span
+      className={`font-bold ml-1 ${
+        signed
+          ? value < 0
+            ? 'text-red-300'
+            : value > 0
+              ? 'text-green-300'
+              : 'text-slate-200'
+          : 'text-slate-200'
+      }`}
+    >
+      {formatMetric(value)}
+    </span>
+  </span>
+);
+
+const firstValue = (
+  values: Record<string, number> | undefined
+): number | undefined => (values ? Object.values(values)[0] : undefined);
+
+const rewardBreakdownEntries = (
+  breakdown: RewardBreakdown
+): [string, number][] =>
+  [
+    ['RIA', breakdown.ria],
+    ['LWF', breakdown.lwf],
+    ['ASF', breakdown.asf],
+    ['Action cost', breakdown.action_cost],
+  ].filter((entry): entry is [string, number] => entry[1] !== undefined);
+
 export const MetricsCard = ({ score, stepState }: MetricsCardProps) => {
   if (!score && !stepState) return null;
 
-  // Data-driven: show reward metrics when step state has reward data
-  const hasRewards = stepState && Object.keys(stepState.rewards).length > 0;
-
-  if (hasRewards) {
-    const rewardValues = Object.values(stepState.rewards);
-    const stepReward = rewardValues.length > 0 ? rewardValues[0] : 0;
-    const cumulativeValues = Object.values(stepState.cumulative_reward);
-    const cumulativeReward =
-      cumulativeValues.length > 0 ? cumulativeValues[0] : 0;
-    return (
-      <div className="bg-slate-700/50 rounded-lg px-3 py-2 flex items-center justify-between text-sm">
-        <span className="font-semibold text-slate-300">Status</span>
-        <div className="flex items-center gap-4">
-          <span>
-            <span className="text-slate-400">Phase</span>{' '}
-            <span className="font-bold text-slate-200 ml-1">
-              {stepState.mission_phase}
-            </span>
-          </span>
-          <span>
-            <span className="text-slate-400">Reward</span>{' '}
-            <span
-              className={`font-bold ml-1 ${stepReward < 0 ? 'text-red-300' : stepReward > 0 ? 'text-green-300' : 'text-slate-200'}`}
-            >
-              {stepReward}
-            </span>
-          </span>
-          <span>
-            <span className="text-slate-400">Total</span>{' '}
-            <span
-              className={`font-bold ml-1 ${cumulativeReward < 0 ? 'text-red-300' : cumulativeReward > 0 ? 'text-green-300' : 'text-slate-200'}`}
-            >
-              {cumulativeReward}
-            </span>
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!score) return null;
+  const stepReward = firstValue(stepState?.rewards);
+  const cumulativeReward = firstValue(stepState?.cumulative_reward);
+  const breakdownEntries = stepState?.reward_breakdown
+    ? rewardBreakdownEntries(stepState.reward_breakdown)
+    : [];
 
   return (
-    <div className="bg-slate-700/50 rounded-lg px-3 py-2 flex items-center justify-between text-sm">
-      <span className="font-semibold text-slate-300">Metrics</span>
-      <div className="flex items-center gap-4">
-        <span>
-          <span className="text-slate-400">C</span>{' '}
-          <span className="font-bold text-slate-200 ml-1">{score.C}</span>
-        </span>
-        <span>
-          <span className="text-slate-400">I</span>{' '}
-          <span className="font-bold text-slate-200 ml-1">{score.I}</span>
-        </span>
-        <span>
-          <span className="text-slate-400">A</span>{' '}
-          <span className="font-bold text-slate-200 ml-1">{score.A}</span>
-        </span>
-        <span>
-          <span className="text-slate-400">R</span>{' '}
-          <span className="font-bold text-slate-200 ml-1">
-            {score.Resilience.toFixed(1)}
-          </span>
-        </span>
+    <div
+      className="bg-slate-700/50 rounded-lg px-3 py-2 text-sm"
+      data-testid="metrics-card"
+      aria-label="Step status metrics"
+    >
+      <div
+        className="flex items-center justify-between gap-2 whitespace-nowrap"
+        data-testid="primary-metrics"
+      >
+        {stepState && (
+          <MetricValue label="Phase" value={stepState.mission_phase} />
+        )}
+        {stepReward !== undefined && (
+          <MetricValue label="Reward" value={stepReward} signed />
+        )}
+        {cumulativeReward !== undefined && (
+          <MetricValue label="Total" value={cumulativeReward} signed />
+        )}
+        {score && <MetricValue label="R" value={score.Resilience} />}
       </div>
+
+      {score && (
+        <div
+          className="mt-2 pt-2 border-t border-slate-600/70 flex items-center justify-end gap-4"
+          data-testid="cia-metrics"
+        >
+          <MetricValue label="C" value={score.C} />
+          <MetricValue label="I" value={score.I} />
+          <MetricValue label="A" value={score.A} />
+        </div>
+      )}
+
+      {breakdownEntries.length > 0 && (
+        <details
+          className="mt-2 pt-2 border-t border-slate-600/70"
+          data-testid="reward-breakdown"
+        >
+          <summary className="cursor-pointer text-slate-300 select-none">
+            Reward breakdown
+          </summary>
+          <div className="mt-2 flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+            {breakdownEntries.map(([label, value]) => (
+              <MetricValue key={label} label={label} value={value} signed />
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 };
