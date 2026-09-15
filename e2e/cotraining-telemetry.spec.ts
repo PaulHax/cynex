@@ -15,6 +15,12 @@ const loadFixture = async (page: import('@playwright/test').Page) => {
 };
 
 test.describe('Co-training telemetry', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/data/trajectories/manifest.json', (route) =>
+      route.fulfill({ json: { files: [] } })
+    );
+  });
+
   test('shows multi-agent actions and combined selected-step metrics', async ({
     page,
   }) => {
@@ -324,9 +330,6 @@ test.describe('Co-training telemetry', () => {
   test('keeps the drag-and-drop hint inside the sidebar and loads a dropped file', async ({
     page,
   }) => {
-    await page.route('**/data/trajectories/manifest.json', (route) =>
-      route.fulfill({ json: { files: [] } })
-    );
     await page.goto('/');
 
     const hint = page.getByText("or drag 'n drop");
