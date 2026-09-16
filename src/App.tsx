@@ -105,25 +105,29 @@ const App = () => {
 
   useEffect(() => {
     if (initialLoading) return;
-    const params = new URLSearchParams(window.location.search);
-    const isManifestTrajectory =
-      trajectoryName !== null && manifestFiles.includes(trajectoryName);
-    if (isManifestTrajectory) {
-      params.set('episode', trajectoryName.replace(/\.json$/, ''));
-      params.delete('file');
-    } else {
-      params.delete('episode');
-    }
-    if (isManifestTrajectory && currentStep > 0) {
-      params.set('step', String(currentStep));
-    } else {
-      params.delete('step');
-    }
-    const search = params.toString();
-    const newUrl = search
-      ? `${window.location.pathname}?${search}`
-      : window.location.pathname;
-    window.history.replaceState(null, '', newUrl);
+    const timeout = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isManifestTrajectory =
+        trajectoryName !== null && manifestFiles.includes(trajectoryName);
+      if (isManifestTrajectory) {
+        params.set('episode', trajectoryName.replace(/\.json$/, ''));
+        params.delete('file');
+      } else {
+        params.delete('episode');
+      }
+      if (isManifestTrajectory && currentStep > 0) {
+        params.set('step', String(currentStep));
+      } else {
+        params.delete('step');
+      }
+      const search = params.toString();
+      const newUrl = search
+        ? `${window.location.pathname}?${search}`
+        : window.location.pathname;
+      window.history.replaceState(null, '', newUrl);
+    }, 100);
+
+    return () => window.clearTimeout(timeout);
   }, [trajectoryName, currentStep, initialLoading, manifestFiles]);
 
   const totalSteps = trajectory?.totalSteps ?? 0;

@@ -153,6 +153,56 @@ test.describe('Co-training telemetry', () => {
     expect(normalized.metricScores).toEqual([]);
   });
 
+  test('loads a legacy trajectory and plots its recorded scores', async ({
+    page,
+  }) => {
+    const fixture = JSON.parse(await readFile(fixturePath, 'utf8'));
+    const legacy = {
+      blue_agent_name: fixture.blue_agent_name,
+      red_agent_name: fixture.red_agent_name,
+      episode: fixture.episode,
+      experiment_time: fixture.experiment_time,
+      network_topology: fixture.network_topology,
+      blue_actions: [
+        { Action: 'Analyse', Status: 'TRUE', Host: 'op_server_host_1' },
+        { Action: 'Remove', Status: 'TRUE', Host: 'op_server_host_2' },
+      ],
+      red_actions: [
+        {
+          Action: 'ExploitRemoteService',
+          Status: 'TRUE',
+          Host: 'op_server_host_0',
+        },
+        {
+          Action: 'PrivilegeEscalate',
+          Status: 'TRUE',
+          Host: 'op_server_host_0',
+        },
+      ],
+      metric_scores: fixture.metric_scores,
+    };
+    await page.goto('/');
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Load File' }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+      name: 'legacy-trajectory.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(legacy)),
+    });
+
+    await expect(page.getByTestId('metric-timeline')).toContainText(
+      'Confidentiality -10'
+    );
+    await expect(page.getByTestId('metric-timeline')).not.toContainText(
+      'Reward'
+    );
+    await expect(page.getByTestId('metric-reward-axis')).toHaveCount(0);
+    await expect(page.getByTestId('playback-controls')).toContainText(
+      'Step 1 / 2'
+    );
+  });
+
   test('keeps the grabbing cursor throughout timeline scrubbing', async ({
     page,
   }) => {
@@ -224,7 +274,7 @@ test.describe('Co-training telemetry', () => {
     await expect(timeline).toContainText('Integrity -20');
     await expect(timeline).toContainText('Availability -30');
     await expect(timeline).toContainText('Resilience -20');
-    await expect(timeline).toContainText('Reward total -12.25');
+    await expect(timeline).toContainText('Reward -12.25');
     await expect(chart.locator('path[data-series]')).toHaveCount(5);
     await timeline
       .getByRole('button', { name: 'Hide Confidentiality line' })
@@ -235,14 +285,10 @@ test.describe('Co-training telemetry', () => {
       .getByRole('button', { name: 'Show Confidentiality line' })
       .click();
     await expect(chart.locator('path[data-series="C"]')).toHaveCount(1);
-    await timeline
-      .getByRole('button', { name: 'Hide Reward total line' })
-      .click();
+    await timeline.getByRole('button', { name: 'Hide Reward line' }).click();
     await expect(chart.locator('path[data-series="Reward"]')).toHaveCount(0);
     await expect(page.getByTestId('metric-reward-axis')).toHaveCount(0);
-    await timeline
-      .getByRole('button', { name: 'Show Reward total line' })
-      .click();
+    await timeline.getByRole('button', { name: 'Show Reward line' }).click();
     await expect(chart.locator('path[data-series="Reward"]')).toHaveCount(1);
     await expect(
       page.getByTestId('metric-score-axis').locator('span')
@@ -304,7 +350,7 @@ test.describe('Co-training telemetry', () => {
     ).toBeVisible();
     await expect(timeline).not.toContainText('Step 2 / 2');
     await expect(timeline).toContainText('Confidentiality -5');
-    await expect(timeline).toContainText('Reward total -14.25');
+    await expect(timeline).toContainText('Reward -14.25');
     await expect(
       page.getByTestId('metric-timeline-marker')
     ).not.toHaveAttribute('x1', firstMarker ?? '');
@@ -445,7 +491,7 @@ test.describe('Co-training telemetry', () => {
     await page.locator('button[title="Next step"]').click();
     const timeline = page.getByTestId('metric-timeline');
     await expect(timeline).toContainText('Confidentiality N/A');
-    await expect(timeline).toContainText('Reward total -14.25');
+    await expect(timeline).toContainText('Reward -14.25');
     await expect(page.getByTestId('metric-timeline-marker')).toHaveAttribute(
       'x1',
       '1000'
@@ -456,7 +502,7 @@ test.describe('Co-training telemetry', () => {
     );
   });
 
-  test('leaves playback available when a trajectory has no metric scores', async ({
+  test('plots cumulative reward when a trajectory has no metric scores', async ({
     page,
   }) => {
     const fixture = JSON.parse(await readFile(fixturePath, 'utf8'));
@@ -467,6 +513,36 @@ test.describe('Co-training telemetry', () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles({
       name: 'no-metrics.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(fixture)),
+    });
+
+    const timeline = page.getByTestId('metric-timeline');
+    await expect(timeline).toContainText('Reward -12.25');
+    await expect(timeline).not.toContainText('Confidentiality');
+    await expect(page.locator('[data-series="Reward"]')).toBeVisible();
+    await expect(page.getByTestId('metric-reward-axis')).toBeVisible();
+    await expect(page.getByTestId('metric-score-axis')).toHaveCount(0);
+    await expect(page.locator('[data-thumb="step"]')).toBeVisible();
+    await page.locator('button[title="Next step"]').click();
+    await expect(page.getByTestId('playback-controls')).toContainText(
+      'Step 2 / 2'
+    );
+    await expect(timeline).toContainText('Reward -14.25');
+  });
+
+  test('hides the graph when neither scores nor rewards were recorded', async ({
+    page,
+  }) => {
+    const fixture = JSON.parse(await readFile(fixturePath, 'utf8'));
+    fixture.metric_scores = [];
+    for (const state of fixture.step_states) state.cumulative_reward = {};
+    await page.goto('/');
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Load File' }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles({
+      name: 'no-graph-data.json',
       mimeType: 'application/json',
       buffer: Buffer.from(JSON.stringify(fixture)),
     });
