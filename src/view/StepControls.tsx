@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { MetricTimeline } from './MetricTimeline';
+import { hasTimelineData } from './timelineData';
 import { PlaybackControls } from './PlaybackControls';
 import { StepSlider } from './RangeSlider';
 import type { MetricScore, StepState } from '../trajectory/types';
@@ -49,15 +50,16 @@ export const StepControls = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showSettings]);
 
-  const sliderRow = metricScores.length > 0 ? 'row-start-2' : 'row-start-1';
-  const playbackRow = metricScores.length > 0 ? 'row-start-3' : 'row-start-2';
+  const hasGraph = hasTimelineData(metricScores, stepStates);
+  const sliderRow = hasGraph ? 'row-start-2' : 'row-start-1';
+  const playbackRow = hasGraph ? 'row-start-3' : 'row-start-2';
 
   return (
     <div
       data-testid="timeline-controls"
-      className={`relative z-30 shrink-0 bg-slate-900 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 ${metricScores.length > 0 ? 'pb-2' : 'py-2'}`}
+      className={`relative z-30 shrink-0 bg-slate-900 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 ${hasGraph ? 'pb-2' : 'py-2'}`}
     >
-      {metricScores.length > 0 && (
+      {hasGraph && (
         <MetricTimeline
           scores={metricScores}
           stepStates={stepStates}

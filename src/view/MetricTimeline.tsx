@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { MetricScore, StepState } from '../trajectory/types';
 import { EyeIcon } from './EyeIcon';
+import { cumulativeRewardAt } from './timelineData';
 
 type MetricTimelineProps = {
   scores: MetricScore[];
@@ -103,9 +104,6 @@ const rewardPath = (
     .join(' ');
 };
 
-const cumulativeRewardAt = (state: StepState | undefined): number | null =>
-  state ? (Object.values(state.cumulative_reward)[0] ?? null) : null;
-
 const SeriesLegend = ({
   label,
   color,
@@ -197,12 +195,12 @@ export const MetricTimeline = ({
       };
     }, [availableScores, rewardValues, totalSteps]);
 
-  if (availableScores.length === 0) return null;
-
   const selectedStep = currentStep;
   const selectedScore = availableScores[selectedStep];
   const selectedReward = rewardValues[selectedStep] ?? null;
   const hasReward = rewardValues.some((value) => value !== null);
+  const hasScores = availableScores.length > 0;
+  if (!hasScores && !hasReward) return null;
   const selectedX = xAt(selectedStep, totalSteps);
   const zeroY = yAt(0, minimum, maximum);
   const scoreTicks = axisTicks(minimum, maximum);
@@ -257,7 +255,11 @@ export const MetricTimeline = ({
   return (
     <section
       className="col-span-2 row-start-1 grid grid-cols-subgrid min-w-0 bg-slate-900 pb-2"
-      aria-label="CIA and Resilience over time"
+      aria-label={
+        hasScores
+          ? 'CIA and Resilience over time'
+          : 'Cumulative Blue reward over time'
+      }
       data-testid="metric-timeline"
     >
       <div className="relative col-span-2">
@@ -282,19 +284,22 @@ export const MetricTimeline = ({
             {expanded ? '▾' : '▸'}
           </span>
           <span className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
-            {SERIES.map(({ key, label, color }) => (
-              <SeriesLegend
-                key={key}
-                label={label}
-                color={color}
-                value={selectedScore ? formatValue(selectedScore[key]) : 'N/A'}
-                visible={visibleSeries[key]}
-                onToggle={() => toggleSeries(key)}
-              />
-            ))}
+            {hasScores &&
+              SERIES.map(({ key, label, color }) => (
+                <SeriesLegend
+                  key={key}
+                  label={label}
+                  color={color}
+                  value={
+                    selectedScore ? formatValue(selectedScore[key]) : 'N/A'
+                  }
+                  visible={visibleSeries[key]}
+                  onToggle={() => toggleSeries(key)}
+                />
+              ))}
             {hasReward && (
               <SeriesLegend
-                label="Reward total"
+                label="Reward"
                 color={REWARD_COLOR}
                 value={
                   selectedReward === null ? 'N/A' : formatValue(selectedReward)
@@ -314,23 +319,25 @@ export const MetricTimeline = ({
           className="col-start-1 min-w-0 pl-4"
         >
           <div className="relative mt-2 h-32">
-            <div
-              className="absolute right-full mr-2 top-0 bottom-0 w-12 text-right text-xs text-slate-400 pointer-events-none"
-              aria-label="CIA and Resilience score scale"
-              data-testid="metric-score-axis"
-            >
-              {scoreTicks.map((value, index) => (
-                <span
-                  key={index}
-                  className="absolute right-0 -translate-y-1/2"
-                  style={{
-                    top: `${(yAt(value, minimum, maximum) / HEIGHT) * 100}%`,
-                  }}
-                >
-                  {formatValue(value)}
-                </span>
-              ))}
-            </div>
+            {hasScores && (
+              <div
+                className="absolute right-full mr-2 top-0 bottom-0 w-12 text-right text-xs text-slate-400 pointer-events-none"
+                aria-label="CIA and Resilience score scale"
+                data-testid="metric-score-axis"
+              >
+                {scoreTicks.map((value, index) => (
+                  <span
+                    key={index}
+                    className="absolute right-0 -translate-y-1/2"
+                    style={{
+                      top: `${(yAt(value, minimum, maximum) / HEIGHT) * 100}%`,
+                    }}
+                  >
+                    {formatValue(value)}
+                  </span>
+                ))}
+              </div>
+            )}
             {hasReward && visibleSeries.Reward && (
               <div
                 className="absolute left-full ml-2 top-0 bottom-0 w-12 text-left text-xs text-rose-300 pointer-events-none"
@@ -352,38 +359,41 @@ export const MetricTimeline = ({
             )}
             <svg
               role="img"
-              aria-label={`C, I, A, and Resilience${hasReward ? ', and cumulative Blue reward' : ''} across ${totalSteps} steps, selected step ${selectedStep + 1}${hasReward ? '; reward uses a separate vertical scale' : ''}`}
+              aria-label={`${hasScores ? 'C, I, A, and Resilience' : ''}${hasScores && hasReward ? ', and ' : ''}${hasReward ? 'cumulative Blue reward' : ''} across ${totalSteps} steps, selected step ${selectedStep + 1}${hasScores && hasReward ? '; reward uses a separate vertical scale' : ''}`}
               data-testid="metric-timeline-chart"
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
               preserveAspectRatio="none"
               className="h-full w-full overflow-visible"
               onPointerLeave={() => setHoveredMetric(null)}
             >
-              {scoreTicks.map((value, index) => (
+              {hasScores &&
+                scoreTicks.map((value, index) => (
+                  <line
+                    key={index}
+                    x1="0"
+                    x2={WIDTH}
+                    y1={yAt(value, minimum, maximum)}
+                    y2={yAt(value, minimum, maximum)}
+                    stroke="#475569"
+                    strokeWidth="1"
+                    strokeOpacity="0.4"
+                    vectorEffect="non-scaling-stroke"
+                    pointerEvents="none"
+                  />
+                ))}
+              {hasScores && (
                 <line
-                  key={index}
                   x1="0"
                   x2={WIDTH}
-                  y1={yAt(value, minimum, maximum)}
-                  y2={yAt(value, minimum, maximum)}
-                  stroke="#475569"
+                  y1={zeroY}
+                  y2={zeroY}
+                  stroke="#64748b"
                   strokeWidth="1"
-                  strokeOpacity="0.4"
+                  strokeDasharray="5 5"
                   vectorEffect="non-scaling-stroke"
                   pointerEvents="none"
                 />
-              ))}
-              <line
-                x1="0"
-                x2={WIDTH}
-                y1={zeroY}
-                y2={zeroY}
-                stroke="#64748b"
-                strokeWidth="1"
-                strokeDasharray="5 5"
-                vectorEffect="non-scaling-stroke"
-                pointerEvents="none"
-              />
+              )}
               {paths
                 .filter(({ key }) => visibleSeries[key])
                 .map(({ key, color, path }) => (

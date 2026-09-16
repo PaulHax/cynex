@@ -16,6 +16,8 @@ type StepSliderProps = {
 export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
+  const pendingValueRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const valueRef = useRef(value);
@@ -29,13 +31,49 @@ export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
+  const commitPendingValue = useCallback(() => {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    const pendingValue = pendingValueRef.current;
+    pendingValueRef.current = null;
+    if (pendingValue !== null && pendingValue !== valueRef.current) {
+      valueRef.current = pendingValue;
+      onChangeRef.current(pendingValue);
+    }
+  }, []);
+
+  const scheduleValueChange = useCallback((nextValue: number) => {
+    pendingValueRef.current = nextValue;
+    if (animationFrameRef.current !== null) return;
+    animationFrameRef.current = requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      const pendingValue = pendingValueRef.current;
+      pendingValueRef.current = null;
+      if (pendingValue !== null && pendingValue !== valueRef.current) {
+        valueRef.current = pendingValue;
+        onChangeRef.current(pendingValue);
+      }
+    });
+  }, []);
+
   const stopDragging = useCallback(() => {
+    commitPendingValue();
     draggingRef.current = false;
     setIsDragging(false);
     document.documentElement.classList.remove('is-scrubbing');
-  }, []);
+  }, [commitPendingValue]);
 
-  useEffect(() => stopDragging, [stopDragging]);
+  useEffect(
+    () => () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      document.documentElement.classList.remove('is-scrubbing');
+    },
+    []
+  );
 
   const getPositionFromEvent = useCallback(
     (clientX: number): number => {
@@ -68,9 +106,9 @@ export const StepSlider = ({ min, max, value, onChange }: StepSliderProps) => {
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!draggingRef.current) return;
-      onChangeRef.current(getPositionFromEvent(e.clientX));
+      scheduleValueChange(getPositionFromEvent(e.clientX));
     },
-    [getPositionFromEvent]
+    [getPositionFromEvent, scheduleValueChange]
   );
 
   const range = max - min || 1;
