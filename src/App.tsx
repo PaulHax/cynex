@@ -8,6 +8,7 @@ import {
 import { NetworkGraph } from './view/NetworkGraph';
 import { ActionPanel } from './view/ActionPanel';
 import { StepControls } from './view/StepControls';
+import { PlaybackControls } from './view/PlaybackControls';
 import { TrajectorySelector } from './view/TrajectorySelector';
 import type { StepRange } from './view/RangeSlider';
 import {
@@ -104,25 +105,29 @@ const App = () => {
 
   useEffect(() => {
     if (initialLoading) return;
-    const params = new URLSearchParams(window.location.search);
-    const isManifestTrajectory =
-      trajectoryName !== null && manifestFiles.includes(trajectoryName);
-    if (isManifestTrajectory) {
-      params.set('episode', trajectoryName.replace(/\.json$/, ''));
-      params.delete('file');
-    } else {
-      params.delete('episode');
-    }
-    if (isManifestTrajectory && currentStep > 0) {
-      params.set('step', String(currentStep));
-    } else {
-      params.delete('step');
-    }
-    const search = params.toString();
-    const newUrl = search
-      ? `${window.location.pathname}?${search}`
-      : window.location.pathname;
-    window.history.replaceState(null, '', newUrl);
+    const timeout = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const isManifestTrajectory =
+        trajectoryName !== null && manifestFiles.includes(trajectoryName);
+      if (isManifestTrajectory) {
+        params.set('episode', trajectoryName.replace(/\.json$/, ''));
+        params.delete('file');
+      } else {
+        params.delete('episode');
+      }
+      if (isManifestTrajectory && currentStep > 0) {
+        params.set('step', String(currentStep));
+      } else {
+        params.delete('step');
+      }
+      const search = params.toString();
+      const newUrl = search
+        ? `${window.location.pathname}?${search}`
+        : window.location.pathname;
+      window.history.replaceState(null, '', newUrl);
+    }, 100);
+
+    return () => window.clearTimeout(timeout);
   }, [trajectoryName, currentStep, initialLoading, manifestFiles]);
 
   const totalSteps = trajectory?.totalSteps ?? 0;
@@ -270,8 +275,6 @@ const App = () => {
       ]
     : undefined;
 
-  const currentScore = trajectory?.metricScores[currentStep];
-
   if (initialLoading) {
     return (
       <div className="h-full bg-slate-900 flex items-center justify-center">
@@ -297,100 +300,114 @@ const App = () => {
 
       <div className="flex-1 flex min-h-0">
         <div
-          className={`relative z-30 flex-shrink-0 w-[420px] flex flex-col p-4 gap-4 transition-all duration-200 ${sidebarCollapsed ? '-ml-[420px]' : ''}`}
+          className={`relative z-30 flex-shrink-0 w-[420px] flex flex-col transition-all duration-200 ${sidebarCollapsed ? '-ml-[420px]' : ''}`}
         >
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`absolute top-4 z-10 bg-slate-900 hover:bg-slate-800 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-all shadow-lg ${
-              sidebarCollapsed
-                ? 'left-[calc(100%+0.5rem)] right-auto'
-                : '-right-4'
-            }`}
-            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <svg
-              className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="relative flex-1 min-h-0 flex flex-col p-4 gap-4">
+            <button
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className={`absolute top-4 z-10 bg-slate-900 hover:bg-slate-800 rounded-lg p-1.5 text-slate-400 hover:text-slate-200 transition-all shadow-lg ${
+                sidebarCollapsed
+                  ? 'left-[calc(100%+0.5rem)] right-auto'
+                  : '-right-4'
+              }`}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+              <svg
+                className={`w-4 h-4 transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
 
-          <header className="flex-shrink-0">
-            <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
-              <div className="flex items-center gap-3">
-                <TrajectorySelector
-                  onTrajectoryLoad={handleTrajectoryLoad}
-                  currentName={trajectoryName}
-                  loading={dropLoading}
-                  error={dropError}
+            <header className="flex-shrink-0">
+              <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                  <TrajectorySelector
+                    onTrajectoryLoad={handleTrajectoryLoad}
+                    currentName={trajectoryName}
+                    loading={dropLoading}
+                    error={dropError}
+                  />
+                </div>
+                {headerText && (
+                  <p className="text-slate-400 text-sm mt-1">{headerText}</p>
+                )}
+              </div>
+            </header>
+
+            {!trajectory ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
+                  <p className="text-slate-400">
+                    Load a trajectory file to get started
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 min-h-0">
+                <ActionPanel
+                  currentStep={currentStep}
+                  totalSteps={totalSteps}
+                  stepState={currentStepState}
+                  onStepChange={setCurrentStep}
+                  agentVisibility={agentVisibility}
+                  onAgentVisibilityChange={setAgentVisibility}
+                  agentActions={trajectory.agentActions}
+                  blueAgents={trajectory.blueAgents}
+                  redAgents={trajectory.redAgents}
                 />
               </div>
-              {headerText && (
-                <p className="text-slate-400 text-sm mt-1">{headerText}</p>
-              )}
-            </div>
-          </header>
-
-          {!trajectory ? (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="bg-slate-800/90 backdrop-blur-sm rounded-lg p-4">
-                <p className="text-slate-400">
-                  Load a trajectory file to get started
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 min-h-0">
-              <ActionPanel
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                score={currentScore}
-                stepState={currentStepState}
-                onStepChange={setCurrentStep}
-                agentVisibility={agentVisibility}
-                onAgentVisibilityChange={setAgentVisibility}
-                agentActions={trajectory.agentActions}
-                blueAgents={trajectory.blueAgents}
-                redAgents={trajectory.redAgents}
-              />
-            </div>
+            )}
+          </div>
+          {trajectory && !sidebarCollapsed && (
+            <PlaybackControls
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              onStepChange={setCurrentStep}
+              isPlaying={isPlaying}
+              onPlayToggle={handlePlayToggle}
+            />
           )}
         </div>
 
-        <div className="flex-1 relative bg-slate-950">
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex-1 min-h-0 relative bg-slate-950">
+            {trajectory && (
+              <NetworkGraph
+                activeActions={activeActions}
+                greenActiveHosts={greenActiveHosts}
+                movements={movements}
+                stepRange={stepRange}
+                nodeStates={nodeStates}
+                topology={topology}
+                agentVisibility={agentVisibility}
+              />
+            )}
+          </div>
           {trajectory && (
-            <NetworkGraph
-              activeActions={activeActions}
-              greenActiveHosts={greenActiveHosts}
-              movements={movements}
-              stepRange={stepRange}
-              nodeStates={nodeStates}
-              topology={topology}
-              agentVisibility={agentVisibility}
+            <StepControls
+              currentStep={currentStep}
+              totalSteps={totalSteps}
+              metricScores={trajectory.metricScores}
+              stepStates={trajectory.stepStates}
+              onStepChange={setCurrentStep}
+              isPlaying={isPlaying}
+              onPlayToggle={handlePlayToggle}
+              trailLength={trailLength}
+              onTrailLengthChange={setTrailLength}
+              sidebarCollapsed={sidebarCollapsed}
             />
           )}
         </div>
       </div>
-
-      {trajectory && (
-        <StepControls
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          onStepChange={setCurrentStep}
-          isPlaying={isPlaying}
-          onPlayToggle={handlePlayToggle}
-          trailLength={trailLength}
-          onTrailLengthChange={setTrailLength}
-        />
-      )}
     </div>
   );
 };

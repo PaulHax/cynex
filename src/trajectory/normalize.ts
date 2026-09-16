@@ -167,6 +167,7 @@ const normalizeV1 = (raw: RawV1): Trajectory => ({
   greenAgents: [],
   networkTopology: raw.network_topology,
   subnetMetadata: deriveSubnetMetadata(raw.network_topology),
+  hostResilienceRoles: {},
   agentActions: {
     [raw.blue_agent_name]: convertV1Actions(raw.blue_actions),
     [raw.red_agent_name]: convertV1Actions(raw.red_actions),
@@ -186,6 +187,7 @@ const normalizeV2 = (raw: RawV2): Trajectory => ({
   greenAgents: raw.green_agents,
   networkTopology: raw.network_topology,
   subnetMetadata: raw.subnet_metadata,
+  hostResilienceRoles: raw.host_resilience_roles ?? {},
   agentActions: raw.agent_actions,
   stepStates: raw.step_states,
   metricScores: raw.metric_scores,

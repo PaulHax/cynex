@@ -330,10 +330,12 @@ const HostTooltip = ({
   node,
   x,
   y,
+  greenWorkFailed,
 }: {
   node: NodeData;
   x: number;
   y: number;
+  greenWorkFailed?: boolean;
 }) => (
   <div
     data-testid="host-tooltip"
@@ -356,6 +358,11 @@ const HostTooltip = ({
     <div>Type: {node.type}</div>
     {node.role && <div>Role: {node.role}</div>}
     {node.subnet && <div>Subnet: {node.subnet}</div>}
+    {greenWorkFailed !== undefined && (
+      <div style={{ color: greenWorkFailed ? '#f87171' : '#4ade80' }}>
+        Green agent work: {greenWorkFailed ? 'Failed' : 'Successful'}
+      </div>
+    )}
   </div>
 );
 
@@ -850,6 +857,7 @@ export const NetworkGraph = ({
           node={hoveredNode.node}
           x={hoveredNode.x}
           y={hoveredNode.y}
+          greenWorkFailed={greenActiveHosts.get(hoveredNode.node.id)}
         />
       )}
     </div>
